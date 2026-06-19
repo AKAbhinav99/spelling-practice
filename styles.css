@@ -270,6 +270,46 @@ main {
   animation: speaking-pulse 0.9s ease-in-out infinite;
 }
 
+.definition-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 2px solid var(--color-muted);
+  border-radius: 999px;
+  padding: 0.8rem 1.4rem;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-muted);
+  background: var(--color-surface);
+  cursor: pointer;
+  transition: transform var(--duration-fast) var(--ease-out-expo),
+    background var(--duration-fast) var(--ease-out-expo);
+}
+
+.definition-btn:hover {
+  background: var(--color-bg);
+  transform: translateY(-2px);
+}
+
+.definition-btn:active {
+  transform: translateY(0);
+}
+
+.definition-btn:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+.definition-icon {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.definition-btn.is-speaking .definition-icon {
+  animation: speaking-pulse 0.9s ease-in-out infinite;
+}
+
 #answerForm {
   display: flex;
   gap: 0.6rem;
@@ -568,6 +608,7 @@ footer {
   .card,
   .play-btn,
   .sentence-btn,
+  .definition-btn,
   .primary-btn,
   .check-btn,
   .next-btn,
@@ -578,7 +619,8 @@ footer {
   .card.is-correct,
   .card.is-wrong,
   .play-btn.is-speaking .play-icon,
-  .sentence-btn.is-speaking .sentence-icon {
+  .sentence-btn.is-speaking .sentence-icon,
+  .definition-btn.is-speaking .definition-icon {
     animation: none;
   }
 }

@@ -5,6 +5,7 @@
   const flashcard = document.getElementById("flashcard");
   const playBtn = document.getElementById("playBtn");
   const sentenceBtn = document.getElementById("sentenceBtn");
+  const definitionBtn = document.getElementById("definitionBtn");
   const answerForm = document.getElementById("answerForm");
   const answerInput = document.getElementById("answerInput");
   const checkBtn = document.getElementById("checkBtn");
@@ -101,6 +102,11 @@
   function speakSentence(word) {
     const sentence = SENTENCES[word.toLowerCase()] || `Here's the word again: ${word}.`;
     speakText(sentence, sentenceBtn, 0.95);
+  }
+
+  function speakDefinition(word) {
+    const definition = DEFINITIONS[word.toLowerCase()] || `No definition is available for this word yet.`;
+    speakText(definition, definitionBtn, 0.95);
   }
 
   // Longest-common-subsequence alignment between the typed attempt and the
@@ -270,6 +276,8 @@
   playBtn.addEventListener("click", () => speakWord(currentWord));
 
   sentenceBtn.addEventListener("click", () => speakSentence(currentWord));
+
+  definitionBtn.addEventListener("click", () => speakDefinition(currentWord));
 
   nextBtn.addEventListener("click", showNextCard);
 

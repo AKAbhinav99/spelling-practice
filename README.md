@@ -45,6 +45,8 @@ named `spelling-practice-main` (repo name + branch), not `spelling-practice`
 - **Use in a Sentence** speaks a short example sentence instead of the bare
   word, which helps tell homophones apart (e.g. "knight" vs. "night") since
   the sentence makes the meaning unambiguous.
+- **Hear the Definition** speaks the word's dictionary definition aloud,
+  for an extra context clue without showing the word's spelling on screen.
 - Type your answer and hit **Enter** (or click **Check**).
   - **Correct** → green flash, move on.
   - **Wrong** → shows the correct spelling with the specific letters you
@@ -64,8 +66,9 @@ const WORDS = ["Scratch", "Stream", "Strong", /* ... */];
 ```
 
 Add, remove, or replace words and reload the page. If you add a word, also
-add a matching lowercase entry to `js/sentences.js` so "Use in a Sentence"
-has something to say for it — otherwise it falls back to a generic line.
+add a matching lowercase entry to `js/sentences.js` and `js/definitions.js`
+so "Use in a Sentence" and "Hear the Definition" have something to say for
+it — otherwise they fall back to a generic line.
 
 ## Browser support note
 
