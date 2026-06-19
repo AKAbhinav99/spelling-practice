@@ -54,8 +54,18 @@ named `spelling-practice-main` (repo name + branch), not `spelling-practice`
     so a single missing or swapped letter doesn't make the rest of the word
     look wrong too), plus what you typed for reference.
 - **End Session** (or finishing the whole word list) stops the timer and
-  shows a results screen with your accuracy, words correct, words wrong, and
-  total time. From there, **Start New Session** shuffles a fresh round.
+  shows a results screen with your accuracy, words correct, words wrong,
+  total time, and a list of exactly which words you got right and which you
+  missed.
+  - If you missed any words, **Practice Missed Words** starts a new round
+    containing only those words.
+  - Finishing a practice round shows a "Review Round Complete" screen. If
+    any words are still tricky, **Continue Practicing** drills just those
+    again — repeat as many times as needed. Once you get every missed word
+    right, it congratulates you and **Exit** is the only option, which
+    returns you to the start screen.
+  - From the main results screen, **Start New Session** shuffles a fresh
+    round of all the words instead.
 
 ## Customizing the word list
 

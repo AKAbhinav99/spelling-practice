@@ -86,7 +86,7 @@
     </section>
 
     <section class="panel results" id="resultsScreen" hidden>
-      <h2>Session Complete</h2>
+      <h2 id="resultsHeading">Session Complete</h2>
       <div class="results-grid">
         <div class="result-stat result-accuracy">
           <span class="result-value" id="resultAccuracy">0%</span>
@@ -105,7 +105,26 @@
           <span class="result-label">Time</span>
         </div>
       </div>
-      <button type="button" class="primary-btn" id="newSessionBtn">Start New Session</button>
+
+      <p class="drill-message" id="drillMessage" hidden></p>
+
+      <div class="word-review">
+        <div class="word-list-block word-list-block-wrong">
+          <h3>Words to Review <span class="word-list-count" id="wrongWordsCount">0</span></h3>
+          <ul class="word-list" id="wrongWordsList"></ul>
+        </div>
+        <div class="word-list-block word-list-block-correct">
+          <h3>Words You Got Right <span class="word-list-count" id="correctWordsCount">0</span></h3>
+          <ul class="word-list" id="correctWordsList"></ul>
+        </div>
+      </div>
+
+      <div class="results-actions">
+        <button type="button" class="primary-btn" id="practiceMissedBtn" hidden>Practice Missed Words</button>
+        <button type="button" class="primary-btn" id="continueDrillBtn" hidden>Continue Practicing</button>
+        <button type="button" class="secondary-btn" id="exitBtn" hidden>Exit</button>
+        <button type="button" class="primary-btn" id="newSessionBtn">Start New Session</button>
+      </div>
     </section>
 
     <p class="no-speech-warning" id="noSpeechWarning" hidden>

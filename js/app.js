@@ -16,19 +16,30 @@
   const practiceScreen = document.getElementById("practiceScreen");
   const endSessionBtn = document.getElementById("endSessionBtn");
   const resultsScreen = document.getElementById("resultsScreen");
+  const resultsHeading = document.getElementById("resultsHeading");
   const resultAccuracy = document.getElementById("resultAccuracy");
   const resultCorrect = document.getElementById("resultCorrect");
   const resultWrong = document.getElementById("resultWrong");
   const resultTime = document.getElementById("resultTime");
+  const drillMessage = document.getElementById("drillMessage");
+  const wrongWordsList = document.getElementById("wrongWordsList");
+  const correctWordsList = document.getElementById("correctWordsList");
+  const wrongWordsCount = document.getElementById("wrongWordsCount");
+  const correctWordsCount = document.getElementById("correctWordsCount");
+  const practiceMissedBtn = document.getElementById("practiceMissedBtn");
+  const continueDrillBtn = document.getElementById("continueDrillBtn");
+  const exitBtn = document.getElementById("exitBtn");
   const newSessionBtn = document.getElementById("newSessionBtn");
   const noSpeechWarning = document.getElementById("noSpeechWarning");
 
-  const TOTAL_WORDS = WORDS.length;
-
+  let mode = "full"; // "full" (the whole word list) or "drill" (practicing missed words)
   let deck = [];
   let currentWord = "";
+  let roundTotal = 0;
   let asked = 0;
   let correct = 0;
+  let roundCorrectWords = [];
+  let roundWrongWords = [];
   let answered = false;
   let sessionStartTime = null;
   let timerInterval = null;
@@ -171,14 +182,18 @@
   }
 
   function updateChips() {
-    progressChip.textContent = `Word ${Math.min(asked + 1, TOTAL_WORDS)} of ${TOTAL_WORDS}`;
+    progressChip.textContent = `Word ${Math.min(asked + 1, roundTotal)} of ${roundTotal}`;
     scoreChip.textContent = `Score: ${correct} / ${asked}`;
   }
 
-  function startSession() {
-    deck = shuffle(WORDS);
+  function beginRound(words, roundMode) {
+    mode = roundMode;
+    deck = shuffle(words);
+    roundTotal = deck.length;
     asked = 0;
     correct = 0;
+    roundCorrectWords = [];
+    roundWrongWords = [];
     sessionStartTime = Date.now();
     clearInterval(timerInterval);
     timerInterval = setInterval(updateTimerChip, 1000);
@@ -188,6 +203,14 @@
     resultsScreen.hidden = true;
     practiceScreen.hidden = false;
     showNextCard();
+  }
+
+  function startSession() {
+    beginRound(WORDS, "full");
+  }
+
+  function startDrill(words) {
+    beginRound(words, "drill");
   }
 
   function showNextCard() {
@@ -208,6 +231,45 @@
     speakWord(currentWord);
   }
 
+  function renderWordList(listEl, words) {
+    if (words.length === 0) {
+      listEl.innerHTML = `<li class="word-list-empty">None!</li>`;
+      return;
+    }
+    const sorted = words.slice().sort((a, b) => a.localeCompare(b));
+    listEl.innerHTML = sorted.map((word) => `<li>${escapeHtml(word)}</li>`).join("");
+  }
+
+  function showFullResults() {
+    resultsHeading.textContent = "Session Complete";
+    drillMessage.hidden = true;
+    practiceMissedBtn.hidden = roundWrongWords.length === 0;
+    continueDrillBtn.hidden = true;
+    exitBtn.hidden = true;
+    newSessionBtn.hidden = false;
+    (practiceMissedBtn.hidden ? newSessionBtn : practiceMissedBtn).focus();
+  }
+
+  function showDrillResults() {
+    resultsHeading.textContent = "Review Round Complete";
+    practiceMissedBtn.hidden = true;
+    newSessionBtn.hidden = true;
+    drillMessage.hidden = false;
+
+    if (roundWrongWords.length > 0) {
+      const count = roundWrongWords.length;
+      drillMessage.textContent = `You've gone through every word you missed — ${count} ${count === 1 ? "is" : "are"} still tricky. Want to keep practicing ${count === 1 ? "it" : "them"}?`;
+      continueDrillBtn.hidden = false;
+      exitBtn.hidden = false;
+      continueDrillBtn.focus();
+    } else {
+      drillMessage.textContent = "Great work! You've gotten every missed word right.";
+      continueDrillBtn.hidden = true;
+      exitBtn.hidden = false;
+      exitBtn.focus();
+    }
+  }
+
   function endSession() {
     clearInterval(timerInterval);
     timerInterval = null;
@@ -221,7 +283,26 @@
     resultCorrect.textContent = String(correct);
     resultWrong.textContent = String(wrong);
     resultTime.textContent = formatTime(elapsedSeconds());
-    newSessionBtn.focus();
+
+    renderWordList(correctWordsList, roundCorrectWords);
+    renderWordList(wrongWordsList, roundWrongWords);
+    correctWordsCount.textContent = String(roundCorrectWords.length);
+    wrongWordsCount.textContent = String(roundWrongWords.length);
+
+    if (mode === "drill") {
+      showDrillResults();
+    } else {
+      showFullResults();
+    }
+  }
+
+  function exitToStartScreen() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+    resultsScreen.hidden = true;
+    practiceScreen.hidden = true;
+    startScreen.hidden = false;
+    startBtn.focus();
   }
 
   function checkAnswer() {
@@ -239,7 +320,12 @@
     nextBtn.hidden = false;
 
     const isCorrect = typed.toLowerCase() === currentWord.toLowerCase();
-    if (isCorrect) correct++;
+    if (isCorrect) {
+      correct++;
+      roundCorrectWords.push(currentWord);
+    } else {
+      roundWrongWords.push(currentWord);
+    }
 
     updateChips();
     flashcard.classList.add(isCorrect ? "is-correct" : "is-wrong");
@@ -286,4 +372,10 @@
   endSessionBtn.addEventListener("click", endSession);
 
   newSessionBtn.addEventListener("click", startSession);
+
+  practiceMissedBtn.addEventListener("click", () => startDrill(roundWrongWords));
+
+  continueDrillBtn.addEventListener("click", () => startDrill(roundWrongWords));
+
+  exitBtn.addEventListener("click", exitToStartScreen);
 })();
