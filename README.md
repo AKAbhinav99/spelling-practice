@@ -9,18 +9,31 @@ No build step, no server, no dependencies. It's plain HTML/CSS/JS.
 
 ## Running it
 
-Just open `index.html` in a browser (Chrome, Edge, or Safari recommended —
-they have solid `speechSynthesis` support). Double-clicking the file works
-fine on macOS/Windows/Linux.
+**If you downloaded the ZIP from GitHub** ("Code" → "Download ZIP"): unzip
+it, open the extracted folder, and double-click `index.html`. It'll open in
+your default browser and just works — no terminal needed.
 
-If you'd rather serve it locally (some browsers are stricter about
-`file://` URLs):
+**If you cloned with `git clone`**, same thing: open `index.html` from
+inside the `spelling-practice` folder.
+
+Chrome, Edge, or Safari are recommended — they have solid `speechSynthesis`
+support for the "Play Word" button.
+
+### Serving it locally instead (optional)
+
+Some browsers are stricter about `file://` URLs, so you can serve it over
+HTTP instead. On macOS, the easiest way to avoid folder-name mix-ups: in
+Finder, right-click the project folder and choose **New Terminal at
+Folder**, then run:
 
 ```bash
-cd spelling-practice
 python3 -m http.server 8000
 # then open http://localhost:8000
 ```
+
+If you `cd` manually instead, note that a ZIP download extracts to a folder
+named `spelling-practice-main` (repo name + branch), not `spelling-practice`
+— that name only applies if you cloned with `git`.
 
 ## How it works
 
