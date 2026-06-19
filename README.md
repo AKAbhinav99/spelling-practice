@@ -24,18 +24,23 @@ python3 -m http.server 8000
 
 ## How it works
 
-- **390 words**, shuffled at the start of each round. Every word is asked
-  exactly once per round — no repeats until you click "Practice Again."
+- **Start Session** begins a timed round: the word list (390 words) is
+  shuffled and a live timer starts ticking. Every word is asked exactly once
+  per round — no repeats until you start a new session.
 - **Play Word** speaks the current word using the Web Speech API
   (`speechSynthesis`). It also plays automatically when a new card appears.
+- **Use in a Sentence** speaks a short example sentence instead of the bare
+  word, which helps tell homophones apart (e.g. "knight" vs. "night") since
+  the sentence makes the meaning unambiguous.
 - Type your answer and hit **Enter** (or click **Check**).
   - **Correct** → green flash, move on.
   - **Wrong** → shows the correct spelling with the specific letters you
     missed underlined in red (using a longest-common-subsequence alignment,
     so a single missing or swapped letter doesn't make the rest of the word
     look wrong too), plus what you typed for reference.
-- After the last word, you get a score summary and a button to start a new
-  shuffled round.
+- **End Session** (or finishing the whole word list) stops the timer and
+  shows a results screen with your accuracy, words correct, words wrong, and
+  total time. From there, **Start New Session** shuffles a fresh round.
 
 ## Customizing the word list
 
@@ -45,7 +50,9 @@ Edit `js/words.js` — it's a plain JS array:
 const WORDS = ["Scratch", "Stream", "Strong", /* ... */];
 ```
 
-Add, remove, or replace words and reload the page.
+Add, remove, or replace words and reload the page. If you add a word, also
+add a matching lowercase entry to `js/sentences.js` so "Use in a Sentence"
+has something to say for it — otherwise it falls back to a generic line.
 
 ## Browser support note
 

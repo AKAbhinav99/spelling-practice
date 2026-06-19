@@ -108,6 +108,12 @@ main {
   border-color: color-mix(in oklab, var(--color-accent) 35%, var(--color-border));
 }
 
+.chip-timer {
+  color: var(--color-play-dark);
+  border-color: color-mix(in oklab, var(--color-play) 45%, var(--color-border));
+  font-variant-numeric: tabular-nums;
+}
+
 .card-stack {
   position: relative;
   width: 100%;
@@ -407,7 +413,7 @@ main {
   border-radius: 6px;
 }
 
-.complete {
+.panel {
   text-align: center;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -417,13 +423,20 @@ main {
   width: 100%;
 }
 
-.complete h2 {
+.panel h2 {
   font-family: var(--font-display);
   color: var(--color-accent-dark);
   margin-top: 0;
 }
 
-#restartBtn {
+.start-screen p {
+  color: var(--color-muted);
+  line-height: 1.6;
+  max-width: 28rem;
+  margin: 0 auto 1.5rem;
+}
+
+.primary-btn {
   border: none;
   border-radius: 999px;
   padding: 0.8rem 1.8rem;
@@ -434,15 +447,92 @@ main {
   background: var(--color-accent);
   cursor: pointer;
   margin-top: 0.5rem;
+  transition: background var(--duration-fast) var(--ease-out-expo),
+    transform var(--duration-fast) var(--ease-out-expo);
 }
 
-#restartBtn:hover {
+.primary-btn:hover {
   background: var(--color-accent-dark);
 }
 
-#restartBtn:focus-visible {
+.primary-btn:active {
+  transform: scale(0.97);
+}
+
+.primary-btn:focus-visible {
   outline: 3px solid var(--color-accent-dark);
   outline-offset: 3px;
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.9rem;
+  margin: 1.5rem 0;
+}
+
+.result-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 1.1rem 0.5rem;
+  border-radius: 14px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+}
+
+.result-value {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 1.4rem + 1vw, 2.1rem);
+  font-weight: 800;
+}
+
+.result-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.result-accuracy .result-value {
+  color: var(--color-accent-dark);
+}
+
+.result-correct .result-value {
+  color: var(--color-correct);
+}
+
+.result-wrong .result-value {
+  color: var(--color-wrong);
+}
+
+.result-time .result-value {
+  color: var(--color-play-dark);
+}
+
+.end-session-btn {
+  display: block;
+  margin: 1.25rem auto 0;
+  border: none;
+  background: none;
+  color: var(--color-muted);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.end-session-btn:hover {
+  color: var(--color-wrong);
+}
+
+.end-session-btn:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: 6px;
 }
 
 .no-speech-warning {
@@ -468,11 +558,17 @@ footer {
   .check-btn {
     padding: 0.7rem 1.3rem;
   }
+
+  .results-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .card,
   .play-btn,
+  .sentence-btn,
+  .primary-btn,
   .check-btn,
   .next-btn,
   #answerInput {
@@ -481,7 +577,8 @@ footer {
 
   .card.is-correct,
   .card.is-wrong,
-  .play-btn.is-speaking .play-icon {
+  .play-btn.is-speaking .play-icon,
+  .sentence-btn.is-speaking .sentence-icon {
     animation: none;
   }
 }

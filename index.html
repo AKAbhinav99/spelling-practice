@@ -13,12 +13,22 @@
   </header>
 
   <main>
-    <section class="practice" id="practiceScreen" aria-labelledby="practice-heading">
+    <section class="panel start-screen" id="startScreen">
+      <h2>Ready to practice?</h2>
+      <p>
+        You'll hear each word once, type what you hear, and we'll time the
+        session and track your accuracy as you go.
+      </p>
+      <button type="button" class="primary-btn" id="startBtn">Start Session</button>
+    </section>
+
+    <section class="practice" id="practiceScreen" aria-labelledby="practice-heading" hidden>
       <h2 id="practice-heading" class="sr-only">Spelling flashcard</h2>
 
       <div class="progress-row">
         <span class="chip" id="progressChip">Word 1 of 390</span>
         <span class="chip chip-score" id="scoreChip">Score: 0 / 0</span>
+        <span class="chip chip-timer" id="timerChip">Time: 0:00</span>
       </div>
 
       <div class="card-stack">
@@ -62,12 +72,31 @@
           <button type="button" class="next-btn" id="nextBtn" hidden>Next Word &rarr;</button>
         </div>
       </div>
+
+      <button type="button" class="end-session-btn" id="endSessionBtn">End Session</button>
     </section>
 
-    <section class="complete" id="completeScreen" hidden>
-      <h2>Nice work!</h2>
-      <p id="completeSummary"></p>
-      <button type="button" id="restartBtn">Practice Again</button>
+    <section class="panel results" id="resultsScreen" hidden>
+      <h2>Session Complete</h2>
+      <div class="results-grid">
+        <div class="result-stat result-accuracy">
+          <span class="result-value" id="resultAccuracy">0%</span>
+          <span class="result-label">Accuracy</span>
+        </div>
+        <div class="result-stat result-correct">
+          <span class="result-value" id="resultCorrect">0</span>
+          <span class="result-label">Correct</span>
+        </div>
+        <div class="result-stat result-wrong">
+          <span class="result-value" id="resultWrong">0</span>
+          <span class="result-label">Wrong</span>
+        </div>
+        <div class="result-stat result-time">
+          <span class="result-value" id="resultTime">0:00</span>
+          <span class="result-label">Time</span>
+        </div>
+      </div>
+      <button type="button" class="primary-btn" id="newSessionBtn">Start New Session</button>
     </section>
 
     <p class="no-speech-warning" id="noSpeechWarning" hidden>

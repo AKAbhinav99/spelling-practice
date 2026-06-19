@@ -1,6 +1,7 @@
 (() => {
   const progressChip = document.getElementById("progressChip");
   const scoreChip = document.getElementById("scoreChip");
+  const timerChip = document.getElementById("timerChip");
   const flashcard = document.getElementById("flashcard");
   const playBtn = document.getElementById("playBtn");
   const sentenceBtn = document.getElementById("sentenceBtn");
@@ -9,10 +10,16 @@
   const checkBtn = document.getElementById("checkBtn");
   const feedback = document.getElementById("feedback");
   const nextBtn = document.getElementById("nextBtn");
+  const startScreen = document.getElementById("startScreen");
+  const startBtn = document.getElementById("startBtn");
   const practiceScreen = document.getElementById("practiceScreen");
-  const completeScreen = document.getElementById("completeScreen");
-  const completeSummary = document.getElementById("completeSummary");
-  const restartBtn = document.getElementById("restartBtn");
+  const endSessionBtn = document.getElementById("endSessionBtn");
+  const resultsScreen = document.getElementById("resultsScreen");
+  const resultAccuracy = document.getElementById("resultAccuracy");
+  const resultCorrect = document.getElementById("resultCorrect");
+  const resultWrong = document.getElementById("resultWrong");
+  const resultTime = document.getElementById("resultTime");
+  const newSessionBtn = document.getElementById("newSessionBtn");
   const noSpeechWarning = document.getElementById("noSpeechWarning");
 
   const TOTAL_WORDS = WORDS.length;
@@ -22,6 +29,8 @@
   let asked = 0;
   let correct = 0;
   let answered = false;
+  let sessionStartTime = null;
+  let timerInterval = null;
 
   function shuffle(items) {
     const result = items.slice();
@@ -103,23 +112,43 @@
       .join("");
   }
 
+  function formatTime(totalSeconds) {
+    const m = Math.floor(totalSeconds / 60);
+    const s = totalSeconds % 60;
+    return `${m}:${String(s).padStart(2, "0")}`;
+  }
+
+  function elapsedSeconds() {
+    return Math.floor((Date.now() - sessionStartTime) / 1000);
+  }
+
+  function updateTimerChip() {
+    timerChip.textContent = `Time: ${formatTime(elapsedSeconds())}`;
+  }
+
   function updateChips() {
     progressChip.textContent = `Word ${Math.min(asked + 1, TOTAL_WORDS)} of ${TOTAL_WORDS}`;
     scoreChip.textContent = `Score: ${correct} / ${asked}`;
   }
 
-  function startRound() {
+  function startSession() {
     deck = shuffle(WORDS);
     asked = 0;
     correct = 0;
-    completeScreen.hidden = true;
+    sessionStartTime = Date.now();
+    clearInterval(timerInterval);
+    timerInterval = setInterval(updateTimerChip, 1000);
+    updateTimerChip();
+
+    startScreen.hidden = true;
+    resultsScreen.hidden = true;
     practiceScreen.hidden = false;
     showNextCard();
   }
 
   function showNextCard() {
     if (deck.length === 0) {
-      finishRound();
+      endSession();
       return;
     }
     currentWord = deck.pop();
@@ -135,11 +164,20 @@
     speakWord(currentWord);
   }
 
-  function finishRound() {
+  function endSession() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+
+    const wrong = asked - correct;
+    const accuracy = asked > 0 ? Math.round((correct / asked) * 100) : 0;
+
     practiceScreen.hidden = true;
-    completeScreen.hidden = false;
-    completeSummary.textContent = `You got ${correct} out of ${TOTAL_WORDS} correct.`;
-    restartBtn.focus();
+    resultsScreen.hidden = false;
+    resultAccuracy.textContent = `${accuracy}%`;
+    resultCorrect.textContent = String(correct);
+    resultWrong.textContent = String(wrong);
+    resultTime.textContent = formatTime(elapsedSeconds());
+    newSessionBtn.focus();
   }
 
   function checkAnswer() {
@@ -197,7 +235,9 @@
 
   nextBtn.addEventListener("click", showNextCard);
 
-  restartBtn.addEventListener("click", startRound);
+  startBtn.addEventListener("click", startSession);
 
-  startRound();
+  endSessionBtn.addEventListener("click", endSession);
+
+  newSessionBtn.addEventListener("click", startSession);
 })();
