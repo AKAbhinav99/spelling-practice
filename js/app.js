@@ -41,19 +41,57 @@
     return result;
   }
 
+  // Chrome (and others) populate the voice list asynchronously, so the
+  // first speak() call right after page load can silently produce no
+  // audio if we ask for a voice before the list has arrived.
+  let cachedVoices = [];
+  function refreshVoices() {
+    cachedVoices = window.speechSynthesis.getVoices();
+  }
+  if ("speechSynthesis" in window) {
+    refreshVoices();
+    window.speechSynthesis.onvoiceschanged = refreshVoices;
+  }
+
   function speakText(text, btnEl, rate) {
     if (!("speechSynthesis" in window)) {
       noSpeechWarning.hidden = false;
       return;
     }
+    noSpeechWarning.hidden = true;
     window.speechSynthesis.cancel();
+
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = rate;
-    utterance.lang = "en-US";
-    utterance.onstart = () => btnEl.classList.add("is-speaking");
+
+    // Prefer an explicit English voice when one is available, but don't
+    // force utterance.lang to "en-US" — on systems without that exact
+    // voice installed, some browsers drop the utterance with no error
+    // at all instead of falling back to a default.
+    const englishVoice = cachedVoices.find((voice) => voice.lang && voice.lang.toLowerCase().startsWith("en"));
+    if (englishVoice) utterance.voice = englishVoice;
+
+    let started = false;
+    utterance.onstart = () => {
+      started = true;
+      btnEl.classList.add("is-speaking");
+    };
     utterance.onend = () => btnEl.classList.remove("is-speaking");
-    utterance.onerror = () => btnEl.classList.remove("is-speaking");
+    utterance.onerror = () => {
+      btnEl.classList.remove("is-speaking");
+      noSpeechWarning.hidden = false;
+    };
+
     window.speechSynthesis.speak(utterance);
+
+    // Some browsers swallow the utterance with no start/error event at
+    // all (stale voice cache, the tab/site got muted, OS sleep/wake).
+    // Surface the warning instead of staying silently broken.
+    setTimeout(() => {
+      if (!started && !window.speechSynthesis.speaking) {
+        noSpeechWarning.hidden = false;
+      }
+    }, 800);
   }
 
   function speakWord(word) {
