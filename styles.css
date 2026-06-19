@@ -171,8 +171,14 @@ main {
   80% { transform: translateX(3px); }
 }
 
+.card-actions {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
 .play-btn {
-  align-self: center;
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
@@ -216,6 +222,46 @@ main {
 @keyframes speaking-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.55; }
+}
+
+.sentence-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 2px solid var(--color-accent);
+  border-radius: 999px;
+  padding: 0.8rem 1.4rem;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-accent-dark);
+  background: color-mix(in oklab, var(--color-accent) 8%, var(--color-surface));
+  cursor: pointer;
+  transition: transform var(--duration-fast) var(--ease-out-expo),
+    background var(--duration-fast) var(--ease-out-expo);
+}
+
+.sentence-btn:hover {
+  background: color-mix(in oklab, var(--color-accent) 16%, var(--color-surface));
+  transform: translateY(-2px);
+}
+
+.sentence-btn:active {
+  transform: translateY(0);
+}
+
+.sentence-btn:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+.sentence-icon {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.sentence-btn.is-speaking .sentence-icon {
+  animation: speaking-pulse 0.9s ease-in-out infinite;
 }
 
 #answerForm {

@@ -3,6 +3,7 @@
   const scoreChip = document.getElementById("scoreChip");
   const flashcard = document.getElementById("flashcard");
   const playBtn = document.getElementById("playBtn");
+  const sentenceBtn = document.getElementById("sentenceBtn");
   const answerForm = document.getElementById("answerForm");
   const answerInput = document.getElementById("answerInput");
   const checkBtn = document.getElementById("checkBtn");
@@ -31,19 +32,28 @@
     return result;
   }
 
-  function speak(word) {
+  function speakText(text, btnEl, rate) {
     if (!("speechSynthesis" in window)) {
       noSpeechWarning.hidden = false;
       return;
     }
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(word);
-    utterance.rate = 0.85;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = rate;
     utterance.lang = "en-US";
-    utterance.onstart = () => playBtn.classList.add("is-speaking");
-    utterance.onend = () => playBtn.classList.remove("is-speaking");
-    utterance.onerror = () => playBtn.classList.remove("is-speaking");
+    utterance.onstart = () => btnEl.classList.add("is-speaking");
+    utterance.onend = () => btnEl.classList.remove("is-speaking");
+    utterance.onerror = () => btnEl.classList.remove("is-speaking");
     window.speechSynthesis.speak(utterance);
+  }
+
+  function speakWord(word) {
+    speakText(word, playBtn, 0.85);
+  }
+
+  function speakSentence(word) {
+    const sentence = SENTENCES[word.toLowerCase()] || `Here's the word again: ${word}.`;
+    speakText(sentence, sentenceBtn, 0.95);
   }
 
   // Longest-common-subsequence alignment between the typed attempt and the
@@ -122,7 +132,7 @@
     flashcard.classList.remove("is-correct", "is-wrong");
     updateChips();
     answerInput.focus();
-    speak(currentWord);
+    speakWord(currentWord);
   }
 
   function finishRound() {
@@ -181,7 +191,9 @@
     checkAnswer();
   });
 
-  playBtn.addEventListener("click", () => speak(currentWord));
+  playBtn.addEventListener("click", () => speakWord(currentWord));
+
+  sentenceBtn.addEventListener("click", () => speakSentence(currentWord));
 
   nextBtn.addEventListener("click", showNextCard);
 
