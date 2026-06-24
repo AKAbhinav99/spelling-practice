@@ -37,7 +37,7 @@ named `spelling-practice-main` (repo name + branch), not `spelling-practice`
 
 ## How it works
 
-- **Start Session** begins a timed round: the word list (390 words) is
+- **Start Session** begins a timed round: the word list (907 words) is
   shuffled and a live timer starts ticking. Every word is asked exactly once
   per round — no repeats until you start a new session.
 - **Play Word** speaks the current word using the Web Speech API
