@@ -65,45 +65,96 @@
     window.speechSynthesis.onvoiceschanged = refreshVoices;
   }
 
+  function showNoSpeechWarning() {
+    // A browser with zero installed voices (common on Windows Chrome
+    // installs with no speech voices configured, or with network voices
+    // blocked) can't speak at all, no matter what we do here — point the
+    // user at the OS-level fix instead of repeating the generic checks.
+    if (cachedVoices.length === 0) {
+      noSpeechWarning.textContent =
+        "No audio played, and this browser reports zero text-to-speech voices installed. " +
+        "On Windows, check Settings → Time & Language → Speech (or chrome://settings/accessibility) " +
+        "and install a voice, then reload this page. Safari and Edge usually have voices built in.";
+    } else {
+      noSpeechWarning.textContent =
+        "No audio played. Check that this tab/site isn't muted (right-click the browser tab), " +
+        "that your system volume is up, and try Chrome, Edge, or Safari, which have the most " +
+        "reliable support for text-to-speech.";
+    }
+    noSpeechWarning.hidden = false;
+  }
+
   function speakText(text, btnEl, rate) {
     if (!("speechSynthesis" in window)) {
-      noSpeechWarning.hidden = false;
+      showNoSpeechWarning();
       return;
     }
     noSpeechWarning.hidden = true;
-    window.speechSynthesis.cancel();
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = rate;
+    function attemptSpeak(isRetry) {
+      window.speechSynthesis.cancel();
 
-    // Prefer an explicit English voice when one is available, but don't
-    // force utterance.lang to "en-US" — on systems without that exact
-    // voice installed, some browsers drop the utterance with no error
-    // at all instead of falling back to a default.
-    const englishVoice = cachedVoices.find((voice) => voice.lang && voice.lang.toLowerCase().startsWith("en"));
-    if (englishVoice) utterance.voice = englishVoice;
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = rate;
 
-    let started = false;
-    utterance.onstart = () => {
-      started = true;
-      btnEl.classList.add("is-speaking");
-    };
-    utterance.onend = () => btnEl.classList.remove("is-speaking");
-    utterance.onerror = () => {
-      btnEl.classList.remove("is-speaking");
-      noSpeechWarning.hidden = false;
-    };
+      // Prefer an explicit English voice when one is available, but don't
+      // force utterance.lang to "en-US" — on systems without that exact
+      // voice installed, some browsers drop the utterance with no error
+      // at all instead of falling back to a default.
+      const englishVoice = cachedVoices.find((voice) => voice.lang && voice.lang.toLowerCase().startsWith("en"));
+      if (englishVoice) utterance.voice = englishVoice;
 
-    window.speechSynthesis.speak(utterance);
+      let started = false;
+      let keepAlive = null;
 
-    // Some browsers swallow the utterance with no start/error event at
-    // all (stale voice cache, the tab/site got muted, OS sleep/wake).
-    // Surface the warning instead of staying silently broken.
-    setTimeout(() => {
-      if (!started && !window.speechSynthesis.speaking) {
-        noSpeechWarning.hidden = false;
-      }
-    }, 800);
+      const stopKeepAlive = () => {
+        if (keepAlive) {
+          clearInterval(keepAlive);
+          keepAlive = null;
+        }
+      };
+
+      utterance.onstart = () => {
+        started = true;
+        btnEl.classList.add("is-speaking");
+        // Chrome has a long-standing bug where speechSynthesis silently
+        // pauses partway through longer utterances (roughly every 15s)
+        // unless nudged with resume(). Safari doesn't need this.
+        keepAlive = setInterval(() => {
+          if (window.speechSynthesis.speaking) window.speechSynthesis.resume();
+        }, 5000);
+      };
+      utterance.onend = () => {
+        stopKeepAlive();
+        btnEl.classList.remove("is-speaking");
+      };
+      utterance.onerror = () => {
+        stopKeepAlive();
+        btnEl.classList.remove("is-speaking");
+        showNoSpeechWarning();
+      };
+
+      window.speechSynthesis.speak(utterance);
+
+      // Some Chrome builds silently drop an utterance queued immediately
+      // after cancel() — no start/error event ever fires. Retry once
+      // before giving up, since a second attempt after the engine has
+      // settled usually goes through.
+      setTimeout(() => {
+        if (!started && !window.speechSynthesis.speaking) {
+          if (!isRetry) {
+            attemptSpeak(true);
+          } else {
+            showNoSpeechWarning();
+          }
+        }
+      }, 900);
+    }
+
+    // A short delay between cancel() and speak() avoids a known Chrome
+    // race condition where the new utterance gets dropped if queued in
+    // the same tick as the cancellation.
+    setTimeout(() => attemptSpeak(false), 50);
   }
 
   function speakWord(word) {
