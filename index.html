@@ -19,13 +19,31 @@
         You'll hear each word once, type what you hear, and we'll time the
         session and track your accuracy as you go.
       </p>
-      <button type="button" class="primary-btn" id="startBtn">Start Session</button>
+      <div class="mode-grid">
+        <button type="button" class="primary-btn" id="startBtn">All Words (Classic)</button>
+        <button type="button" class="secondary-btn" id="chooseGradeBtn">Practice by Grade Level &rarr;</button>
+      </div>
+    </section>
+
+    <section class="panel grade-screen" id="gradeScreen" hidden>
+      <h2>Choose a Grade Level</h2>
+      <p>Pick the grade that matches who's practicing.</p>
+      <div class="grade-grid" id="gradeGrid"></div>
+      <button type="button" class="back-btn" id="gradeBackBtn">&larr; Back</button>
+    </section>
+
+    <section class="panel difficulty-screen" id="difficultyScreen" hidden>
+      <h2 id="difficultyHeading">Choose a Difficulty</h2>
+      <p id="difficultySubheading"></p>
+      <div class="difficulty-grid" id="difficultyGrid"></div>
+      <button type="button" class="back-btn" id="difficultyBackBtn">&larr; Back</button>
     </section>
 
     <section class="practice" id="practiceScreen" aria-labelledby="practice-heading" hidden>
       <h2 id="practice-heading" class="sr-only">Spelling flashcard</h2>
 
       <div class="progress-row">
+        <span class="chip chip-mode" id="modeChip" hidden></span>
         <span class="chip" id="progressChip">Word 1 of 907</span>
         <span class="chip chip-score" id="scoreChip">Score: 0 / 0</span>
         <span class="chip chip-timer" id="timerChip">Time: 0:00</span>
@@ -122,8 +140,8 @@
       <div class="results-actions">
         <button type="button" class="primary-btn" id="practiceMissedBtn" hidden>Practice Missed Words</button>
         <button type="button" class="primary-btn" id="continueDrillBtn" hidden>Continue Practicing</button>
-        <button type="button" class="secondary-btn" id="exitBtn" hidden>Exit</button>
         <button type="button" class="primary-btn" id="newSessionBtn">Start New Session</button>
+        <button type="button" class="secondary-btn" id="exitBtn" hidden>Back to Start Screen</button>
       </div>
     </section>
 
@@ -142,6 +160,7 @@
   <script src="js/words.js"></script>
   <script src="js/sentences.js"></script>
   <script src="js/definitions.js"></script>
+  <script src="js/gradeLevels.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

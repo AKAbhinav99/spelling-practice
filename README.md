@@ -37,9 +37,16 @@ named `spelling-practice-main` (repo name + branch), not `spelling-practice`
 
 ## How it works
 
-- **Start Session** begins a timed round: the word list (907 words) is
-  shuffled and a live timer starts ticking. Every word is asked exactly once
-  per round — no repeats until you start a new session.
+- **All Words (Classic)** begins a timed round: the whole word list (1,348
+  words) is shuffled and a live timer starts ticking. Every word is asked
+  exactly once per round — no repeats until you start a new session.
+- **Practice by Grade Level** walks through a two-step picker: choose a
+  grade (1st–5th, or Middle School & Above) and then a difficulty
+  (Easy/Medium/Hard/Extra Hard, or Mixed for all four), and the round only
+  draws from that grade+difficulty's word pool (200+ words each). A colored
+  chip during practice shows which grade/difficulty is active, and **Start
+  New Session** afterward reshuffles the same pool rather than switching
+  back to the full list.
 - **Play Word** speaks the current word using the Web Speech API
   (`speechSynthesis`). It also plays automatically when a new card appears.
 - **Use in a Sentence** speaks a short example sentence instead of the bare
@@ -79,6 +86,19 @@ Add, remove, or replace words and reload the page. If you add a word, also
 add a matching lowercase entry to `js/sentences.js` and `js/definitions.js`
 so "Use in a Sentence" and "Hear the Definition" have something to say for
 it — otherwise they fall back to a generic line.
+
+To make a word selectable from the grade-level picker, also add it to
+`js/gradeLevels.js`:
+
+```js
+const WORD_LEVELS = {
+  yourword: { grade: "3", difficulty: "medium" },
+  // grade: "1".."5" or "middle" | difficulty: "easy" | "medium" | "hard" | "extraHard"
+};
+```
+
+Words left out of `gradeLevels.js` still work fine in "All Words (Classic)"
+mode; they just won't show up in any grade/difficulty pool.
 
 ## Browser support note
 

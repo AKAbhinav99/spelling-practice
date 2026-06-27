@@ -13,6 +13,16 @@
   const nextBtn = document.getElementById("nextBtn");
   const startScreen = document.getElementById("startScreen");
   const startBtn = document.getElementById("startBtn");
+  const chooseGradeBtn = document.getElementById("chooseGradeBtn");
+  const gradeScreen = document.getElementById("gradeScreen");
+  const gradeGrid = document.getElementById("gradeGrid");
+  const gradeBackBtn = document.getElementById("gradeBackBtn");
+  const difficultyScreen = document.getElementById("difficultyScreen");
+  const difficultyHeading = document.getElementById("difficultyHeading");
+  const difficultySubheading = document.getElementById("difficultySubheading");
+  const difficultyGrid = document.getElementById("difficultyGrid");
+  const difficultyBackBtn = document.getElementById("difficultyBackBtn");
+  const modeChip = document.getElementById("modeChip");
   const practiceScreen = document.getElementById("practiceScreen");
   const endSessionBtn = document.getElementById("endSessionBtn");
   const resultsScreen = document.getElementById("resultsScreen");
@@ -43,6 +53,30 @@
   let answered = false;
   let sessionStartTime = null;
   let timerInterval = null;
+
+  // The word pool behind the *current* full round, and the label/color
+  // shown in the mode chip while practicing it. Classic "All Words" leaves
+  // both label/color empty so the chip stays hidden.
+  let activeWords = WORDS;
+  let activeModeLabel = "";
+  let activeModeColor = "";
+  let selectedGradeId = null;
+
+  const GRADE_COLOR_VARS = {
+    1: "--grade-1",
+    2: "--grade-2",
+    3: "--grade-3",
+    4: "--grade-4",
+    5: "--grade-5",
+    middle: "--grade-middle",
+  };
+  const GRADE_BADGES = { 1: "1", 2: "2", 3: "3", 4: "4", 5: "5", middle: "MS" };
+  const DIFFICULTY_COLOR_VARS = {
+    easy: "--color-correct",
+    medium: "--color-accent",
+    hard: "--color-play-dark",
+    extraHard: "--color-wrong",
+  };
 
   function shuffle(items) {
     const result = items.slice();
@@ -237,6 +271,100 @@
     scoreChip.textContent = `Score: ${correct} / ${asked}`;
   }
 
+  function getWordsForGrade(gradeId, difficultyId) {
+    return WORDS.filter((word) => {
+      const level = WORD_LEVELS[word.toLowerCase()];
+      if (!level || level.grade !== gradeId) return false;
+      return difficultyId === "mixed" || level.difficulty === difficultyId;
+    });
+  }
+
+  function startFullRound(words, modeLabel, modeColorVar) {
+    activeWords = words;
+    activeModeLabel = modeLabel;
+    activeModeColor = modeColorVar;
+    if (modeLabel) {
+      modeChip.textContent = modeLabel;
+      modeChip.style.setProperty("--mode-color", `var(${modeColorVar})`);
+      modeChip.hidden = false;
+    } else {
+      modeChip.hidden = true;
+    }
+    beginRound(words, "full");
+  }
+
+  function renderGradeGrid() {
+    gradeGrid.innerHTML = GRADE_LEVELS.map(
+      (g) => `
+        <button type="button" class="grade-btn" data-grade="${g.id}" style="--grade-color: var(${GRADE_COLOR_VARS[g.id]})">
+          <span class="grade-btn-badge">${GRADE_BADGES[g.id]}</span>
+          <span class="grade-btn-label">${escapeHtml(g.label)}</span>
+        </button>
+      `
+    ).join("");
+
+    gradeGrid.querySelectorAll(".grade-btn").forEach((btn) => {
+      btn.addEventListener("click", () => showDifficultyScreen(btn.dataset.grade));
+    });
+  }
+
+  function renderDifficultyGrid(gradeId) {
+    const difficultyButtons = DIFFICULTIES.map(
+      (d) => `
+        <button type="button" class="difficulty-btn" data-difficulty="${d.id}" style="--diff-color: var(${DIFFICULTY_COLOR_VARS[d.id]})">
+          ${escapeHtml(d.label)}
+        </button>
+      `
+    ).join("");
+
+    const mixedButton = `
+      <button type="button" class="difficulty-btn difficulty-btn-mixed" data-difficulty="mixed" style="--diff-color: var(${GRADE_COLOR_VARS[gradeId]})">
+        Mixed (All Difficulties)
+      </button>
+    `;
+
+    difficultyGrid.innerHTML = difficultyButtons + mixedButton;
+
+    difficultyGrid.querySelectorAll(".difficulty-btn").forEach((btn) => {
+      btn.addEventListener("click", () => startGradeSession(gradeId, btn.dataset.difficulty));
+    });
+  }
+
+  function showGradeScreen() {
+    startScreen.hidden = true;
+    gradeScreen.hidden = false;
+    renderGradeGrid();
+  }
+
+  function showDifficultyScreen(gradeId) {
+    selectedGradeId = gradeId;
+    const gradeLabel = GRADE_LEVELS.find((g) => g.id === gradeId).label;
+    difficultyHeading.textContent = `${gradeLabel}: Choose a Difficulty`;
+    difficultySubheading.textContent = `Pick how challenging the words should be for ${gradeLabel}.`;
+    renderDifficultyGrid(gradeId);
+    gradeScreen.hidden = true;
+    difficultyScreen.hidden = false;
+  }
+
+  function backToStartScreen() {
+    gradeScreen.hidden = true;
+    difficultyScreen.hidden = true;
+    startScreen.hidden = false;
+  }
+
+  function backToGradeScreen() {
+    difficultyScreen.hidden = true;
+    showGradeScreen();
+  }
+
+  function startGradeSession(gradeId, difficultyId) {
+    const words = getWordsForGrade(gradeId, difficultyId);
+    const gradeLabel = GRADE_LEVELS.find((g) => g.id === gradeId).label;
+    const difficultyLabel =
+      difficultyId === "mixed" ? "Mixed" : DIFFICULTIES.find((d) => d.id === difficultyId).label;
+    startFullRound(words, `${gradeLabel} · ${difficultyLabel}`, GRADE_COLOR_VARS[gradeId]);
+  }
+
   function beginRound(words, roundMode) {
     mode = roundMode;
     deck = shuffle(words);
@@ -251,13 +379,19 @@
     updateTimerChip();
 
     startScreen.hidden = true;
+    gradeScreen.hidden = true;
+    difficultyScreen.hidden = true;
     resultsScreen.hidden = true;
     practiceScreen.hidden = false;
     showNextCard();
   }
 
   function startSession() {
-    beginRound(WORDS, "full");
+    startFullRound(WORDS, "", "");
+  }
+
+  function startNewRoundSamePool() {
+    startFullRound(activeWords, activeModeLabel, activeModeColor);
   }
 
   function startDrill(words) {
@@ -296,7 +430,7 @@
     drillMessage.hidden = true;
     practiceMissedBtn.hidden = roundWrongWords.length === 0;
     continueDrillBtn.hidden = true;
-    exitBtn.hidden = true;
+    exitBtn.hidden = false;
     newSessionBtn.hidden = false;
     (practiceMissedBtn.hidden ? newSessionBtn : practiceMissedBtn).focus();
   }
@@ -420,9 +554,15 @@
 
   startBtn.addEventListener("click", startSession);
 
+  chooseGradeBtn.addEventListener("click", showGradeScreen);
+
+  gradeBackBtn.addEventListener("click", backToStartScreen);
+
+  difficultyBackBtn.addEventListener("click", backToGradeScreen);
+
   endSessionBtn.addEventListener("click", endSession);
 
-  newSessionBtn.addEventListener("click", startSession);
+  newSessionBtn.addEventListener("click", startNewRoundSamePool);
 
   practiceMissedBtn.addEventListener("click", () => startDrill(roundWrongWords));
 

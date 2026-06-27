@@ -14,6 +14,13 @@
   --color-wrong-bg: #fff1e8;
   --color-border: #e3d8bf;
 
+  --grade-1: #f2a93b;
+  --grade-2: #e0883a;
+  --grade-3: #1f7a6c;
+  --grade-4: #3d6b8c;
+  --grade-5: #5b4b8a;
+  --grade-middle: #2b2a28;
+
   --font-display: -apple-system, "Segoe UI Rounded", "Segoe UI", system-ui, sans-serif;
   --font-body: -apple-system, "Segoe UI", system-ui, sans-serif;
 
@@ -112,6 +119,12 @@ main {
   color: var(--color-play-dark);
   border-color: color-mix(in oklab, var(--color-play) 45%, var(--color-border));
   font-variant-numeric: tabular-nums;
+}
+
+.chip-mode {
+  color: #fff;
+  background: var(--mode-color, var(--color-accent));
+  border-color: transparent;
 }
 
 .card-stack {
@@ -469,11 +482,21 @@ main {
   margin-top: 0;
 }
 
-.start-screen p {
+.start-screen p,
+.grade-screen p,
+.difficulty-screen p {
   color: var(--color-muted);
   line-height: 1.6;
   max-width: 28rem;
   margin: 0 auto 1.5rem;
+}
+
+.mode-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  max-width: 22rem;
+  margin: 0 auto;
 }
 
 .primary-btn {
@@ -697,6 +720,132 @@ main {
   border-radius: 6px;
 }
 
+.back-btn {
+  display: block;
+  margin: 1.5rem auto 0;
+  border: none;
+  background: none;
+  color: var(--color-muted);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.back-btn:hover {
+  color: var(--color-accent-dark);
+}
+
+.back-btn:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.grade-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.8rem;
+  margin: 0 auto;
+  max-width: 26rem;
+}
+
+.grade-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+  background: var(--color-bg);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+  transition: transform var(--duration-fast) var(--ease-out-expo),
+    box-shadow var(--duration-fast) var(--ease-out-expo),
+    border-color var(--duration-fast) var(--ease-out-expo);
+}
+
+.grade-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px -12px rgb(43 42 40 / 0.3);
+  border-color: var(--grade-color, var(--color-accent));
+}
+
+.grade-btn:active {
+  transform: translateY(0);
+}
+
+.grade-btn:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.grade-btn-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #fff;
+  background: var(--grade-color, var(--color-accent));
+}
+
+.grade-btn-label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--color-ink);
+}
+
+.difficulty-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.8rem;
+  margin: 0 auto 0.5rem;
+  max-width: 24rem;
+}
+
+.difficulty-btn {
+  border: 2px solid var(--diff-color, var(--color-accent));
+  border-radius: 14px;
+  padding: 1rem 0.5rem;
+  background: var(--color-surface);
+  color: var(--diff-color, var(--color-accent-dark));
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform var(--duration-fast) var(--ease-out-expo),
+    background var(--duration-fast) var(--ease-out-expo);
+}
+
+.difficulty-btn:hover {
+  transform: translateY(-2px);
+  background: color-mix(in oklab, var(--diff-color, var(--color-accent)) 10%, var(--color-surface));
+}
+
+.difficulty-btn:active {
+  transform: translateY(0);
+}
+
+.difficulty-btn:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.difficulty-btn-mixed {
+  grid-column: 1 / -1;
+  border-style: dashed;
+}
+
 .no-speech-warning {
   margin-top: 1rem;
   font-size: 0.9rem;
@@ -728,6 +877,15 @@ footer {
   .word-review {
     grid-template-columns: 1fr;
   }
+
+  .grade-grid,
+  .difficulty-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .difficulty-btn-mixed {
+    grid-column: auto;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -737,6 +895,8 @@ footer {
   .definition-btn,
   .primary-btn,
   .secondary-btn,
+  .grade-btn,
+  .difficulty-btn,
   .check-btn,
   .next-btn,
   #answerInput {
