@@ -37,13 +37,13 @@ named `spelling-practice-main` (repo name + branch), not `spelling-practice`
 
 ## How it works
 
-- **All Words (Classic)** begins a timed round: the whole word list (1,348
+- **All Words (Classic)** begins a timed round: the whole word list (1,828
   words) is shuffled and a live timer starts ticking. Every word is asked
   exactly once per round — no repeats until you start a new session.
 - **Practice by Grade Level** walks through a two-step picker: choose a
   grade (1st–5th, or Middle School & Above) and then a difficulty
   (Easy/Medium/Hard/Extra Hard, or Mixed for all four), and the round only
-  draws from that grade+difficulty's word pool (200+ words each). A colored
+  draws from that grade+difficulty's word pool (280+ words each). A colored
   chip during practice shows which grade/difficulty is active, and **Start
   New Session** afterward reshuffles the same pool rather than switching
   back to the full list.
