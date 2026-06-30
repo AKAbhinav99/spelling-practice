@@ -22,6 +22,17 @@
       <div class="mode-grid">
         <button type="button" class="primary-btn" id="startBtn">All Words (Classic)</button>
         <button type="button" class="secondary-btn" id="chooseGradeBtn">Practice by Grade Level &rarr;</button>
+        <button type="button" class="secondary-btn" id="historyBtn">View History</button>
+      </div>
+    </section>
+
+    <section class="panel history-screen" id="historyScreen" hidden>
+      <h2>Practice History</h2>
+      <p class="history-empty" id="historyEmptyMessage">You haven't completed a practice session yet.</p>
+      <div class="history-list" id="historyList"></div>
+      <div class="history-actions">
+        <button type="button" class="secondary-btn" id="clearHistoryBtn" hidden>Clear History</button>
+        <button type="button" class="back-btn" id="historyBackBtn">&larr; Back</button>
       </div>
     </section>
 

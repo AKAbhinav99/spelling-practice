@@ -846,6 +846,132 @@ main {
   border-style: dashed;
 }
 
+.history-screen p {
+  color: var(--color-muted);
+  line-height: 1.6;
+  max-width: 28rem;
+  margin: 0 auto 1.5rem;
+}
+
+.history-empty {
+  font-style: italic;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  text-align: left;
+  max-height: 26rem;
+  overflow-y: auto;
+  margin-bottom: 0.5rem;
+}
+
+.history-entry {
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-bg);
+  overflow: hidden;
+}
+
+.history-entry[open] {
+  border-color: var(--color-accent);
+}
+
+.history-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  padding: 0.85rem 1rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.history-summary::-webkit-details-marker {
+  display: none;
+}
+
+.history-summary:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: -3px;
+  border-radius: 10px;
+}
+
+.history-summary-main {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.history-date {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--color-ink);
+  font-size: 0.95rem;
+}
+
+.history-time {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
+.history-mode {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-accent-dark);
+  background: color-mix(in oklab, var(--color-accent) 12%, var(--color-surface));
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+}
+
+.history-summary-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.history-score {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--color-ink);
+}
+
+.history-accuracy {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: var(--color-accent-dark);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+}
+
+.history-detail {
+  padding: 0 1rem 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.history-detail-meta {
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.history-detail .word-review {
+  margin-bottom: 0;
+}
+
+.history-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
 .no-speech-warning {
   margin-top: 1rem;
   font-size: 0.9rem;

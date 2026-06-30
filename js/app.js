@@ -14,6 +14,12 @@
   const startScreen = document.getElementById("startScreen");
   const startBtn = document.getElementById("startBtn");
   const chooseGradeBtn = document.getElementById("chooseGradeBtn");
+  const historyBtn = document.getElementById("historyBtn");
+  const historyScreen = document.getElementById("historyScreen");
+  const historyEmptyMessage = document.getElementById("historyEmptyMessage");
+  const historyList = document.getElementById("historyList");
+  const clearHistoryBtn = document.getElementById("clearHistoryBtn");
+  const historyBackBtn = document.getElementById("historyBackBtn");
   const gradeScreen = document.getElementById("gradeScreen");
   const gradeGrid = document.getElementById("gradeGrid");
   const gradeBackBtn = document.getElementById("gradeBackBtn");
@@ -61,6 +67,9 @@
   let activeModeLabel = "";
   let activeModeColor = "";
   let selectedGradeId = null;
+
+  const HISTORY_STORAGE_KEY = "spellingPracticeHistory";
+  const MAX_HISTORY_ENTRIES = 50;
 
   const GRADE_COLOR_VARS = {
     1: "--grade-1",
@@ -379,6 +388,7 @@
     updateTimerChip();
 
     startScreen.hidden = true;
+    historyScreen.hidden = true;
     gradeScreen.hidden = true;
     difficultyScreen.hidden = true;
     resultsScreen.hidden = true;
@@ -416,13 +426,112 @@
     speakWord(currentWord);
   }
 
-  function renderWordList(listEl, words) {
+  function wordListItemsHtml(words) {
     if (words.length === 0) {
-      listEl.innerHTML = `<li class="word-list-empty">None!</li>`;
-      return;
+      return `<li class="word-list-empty">None!</li>`;
     }
     const sorted = words.slice().sort((a, b) => a.localeCompare(b));
-    listEl.innerHTML = sorted.map((word) => `<li>${escapeHtml(word)}</li>`).join("");
+    return sorted.map((word) => `<li>${escapeHtml(word)}</li>`).join("");
+  }
+
+  function renderWordList(listEl, words) {
+    listEl.innerHTML = wordListItemsHtml(words);
+  }
+
+  function loadHistory() {
+    try {
+      const raw = localStorage.getItem(HISTORY_STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveHistoryEntry(entry) {
+    const history = loadHistory();
+    history.unshift(entry);
+    history.length = Math.min(history.length, MAX_HISTORY_ENTRIES);
+    try {
+      localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
+    } catch {
+      // Storage full or unavailable; the entry just won't persist.
+    }
+  }
+
+  function clearHistory() {
+    try {
+      localStorage.removeItem(HISTORY_STORAGE_KEY);
+    } catch {
+      // Ignore; nothing to clean up if storage is unavailable.
+    }
+  }
+
+  function formatHistoryTimestamp(timestamp) {
+    const date = new Date(timestamp);
+    return {
+      date: date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }),
+      time: date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }),
+    };
+  }
+
+  function renderHistoryScreen() {
+    const history = loadHistory();
+
+    if (history.length === 0) {
+      historyEmptyMessage.hidden = false;
+      historyList.innerHTML = "";
+      clearHistoryBtn.hidden = true;
+      return;
+    }
+
+    historyEmptyMessage.hidden = true;
+    clearHistoryBtn.hidden = false;
+
+    historyList.innerHTML = history
+      .map((entry) => {
+        const { date, time } = formatHistoryTimestamp(entry.timestamp);
+        return `
+          <details class="history-entry">
+            <summary class="history-summary">
+              <span class="history-summary-main">
+                <span class="history-date">${date}</span>
+                <span class="history-time">${time}</span>
+                <span class="history-mode">${escapeHtml(entry.modeLabel)}</span>
+              </span>
+              <span class="history-summary-stats">
+                <span class="history-score">${entry.correct} / ${entry.asked}</span>
+                <span class="history-accuracy">${entry.accuracy}%</span>
+              </span>
+            </summary>
+            <div class="history-detail">
+              <p class="history-detail-meta">Time taken: ${formatTime(entry.timeSeconds)}</p>
+              <div class="word-review">
+                <div class="word-list-block word-list-block-wrong">
+                  <h3>Missed <span class="word-list-count">${entry.wrongWords.length}</span></h3>
+                  <ul class="word-list">${wordListItemsHtml(entry.wrongWords)}</ul>
+                </div>
+                <div class="word-list-block word-list-block-correct">
+                  <h3>Correct <span class="word-list-count">${entry.correctWords.length}</span></h3>
+                  <ul class="word-list">${wordListItemsHtml(entry.correctWords)}</ul>
+                </div>
+              </div>
+            </div>
+          </details>
+        `;
+      })
+      .join("");
+  }
+
+  function showHistoryScreen() {
+    renderHistoryScreen();
+    startScreen.hidden = true;
+    historyScreen.hidden = false;
+  }
+
+  function backToStartScreenFromHistory() {
+    historyScreen.hidden = true;
+    startScreen.hidden = false;
   }
 
   function showFullResults() {
@@ -461,18 +570,33 @@
 
     const wrong = asked - correct;
     const accuracy = asked > 0 ? Math.round((correct / asked) * 100) : 0;
+    const timeSeconds = elapsedSeconds();
 
     practiceScreen.hidden = true;
     resultsScreen.hidden = false;
     resultAccuracy.textContent = `${accuracy}%`;
     resultCorrect.textContent = String(correct);
     resultWrong.textContent = String(wrong);
-    resultTime.textContent = formatTime(elapsedSeconds());
+    resultTime.textContent = formatTime(timeSeconds);
 
     renderWordList(correctWordsList, roundCorrectWords);
     renderWordList(wrongWordsList, roundWrongWords);
     correctWordsCount.textContent = String(roundCorrectWords.length);
     wrongWordsCount.textContent = String(roundWrongWords.length);
+
+    if (asked > 0) {
+      saveHistoryEntry({
+        timestamp: Date.now(),
+        modeLabel: mode === "drill" ? "Missed Words Review" : activeModeLabel || "All Words (Classic)",
+        asked,
+        correct,
+        wrong,
+        accuracy,
+        timeSeconds,
+        correctWords: roundCorrectWords.slice(),
+        wrongWords: roundWrongWords.slice(),
+      });
+    }
 
     if (mode === "drill") {
       showDrillResults();
@@ -555,6 +679,17 @@
   startBtn.addEventListener("click", startSession);
 
   chooseGradeBtn.addEventListener("click", showGradeScreen);
+
+  historyBtn.addEventListener("click", showHistoryScreen);
+
+  historyBackBtn.addEventListener("click", backToStartScreenFromHistory);
+
+  clearHistoryBtn.addEventListener("click", () => {
+    if (window.confirm("Clear all practice history? This can't be undone.")) {
+      clearHistory();
+      renderHistoryScreen();
+    }
+  });
 
   gradeBackBtn.addEventListener("click", backToStartScreen);
 

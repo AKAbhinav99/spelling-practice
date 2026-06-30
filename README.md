@@ -73,6 +73,12 @@ named `spelling-practice-main` (repo name + branch), not `spelling-practice`
     returns you to the start screen.
   - From the main results screen, **Start New Session** shuffles a fresh
     round of all the words instead.
+- **View History** (on the start screen) opens a log of every completed
+  session — date, time, mode, score, accuracy, and time taken. Click a
+  session to expand it and see exactly which words you got right and which
+  you missed that round. History is saved in the browser's `localStorage`
+  (the last 50 sessions), so it's local to that browser/device and isn't
+  synced anywhere. **Clear History** wipes it.
 
 ## Customizing the word list
 
