@@ -20,7 +20,8 @@
   const progressChart = document.getElementById("progressChart");
   const progressTrend = document.getElementById("progressTrend");
   const progressChartSvgWrap = document.getElementById("progressChartSvgWrap");
-  const practicePreviousDaysBtn = document.getElementById("practicePreviousDaysBtn");
+  const progressPointInfo = document.getElementById("progressPointInfo");
+  const practiceAllMissedBtn = document.getElementById("practiceAllMissedBtn");
   const historyList = document.getElementById("historyList");
   const clearHistoryBtn = document.getElementById("clearHistoryBtn");
   const historyBackBtn = document.getElementById("historyBackBtn");
@@ -75,6 +76,7 @@
 
   const HISTORY_STORAGE_KEY = "spellingPracticeHistory";
   const MAX_HISTORY_ENTRIES = 50;
+  const PROGRESS_POINT_INFO_DEFAULT = "Hover or tap a point to see that session's accuracy.";
 
   const GRADE_COLOR_VARS = {
     1: "--grade-1",
@@ -481,20 +483,14 @@
     };
   }
 
-  function localDateKey(timestamp) {
-    const date = new Date(timestamp);
-    return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-  }
-
-  // Words missed on any day before today, deduped — lets a learner drill
-  // everything that's tripped them up previously without re-asking words
-  // they only just got wrong in today's still-in-progress practice.
-  function getMissedWordsFromPreviousDays() {
+  // Every word missed in any completed session, deduped — lets a learner
+  // drill everything that's tripped them up in past practice (today's
+  // earlier sessions included; only the round still in progress is excluded,
+  // since it isn't saved to history until it ends).
+  function getAllMissedWordsFromHistory() {
     const history = loadHistory();
-    const todayKey = localDateKey(Date.now());
     const wordSet = new Set();
     history.forEach((entry) => {
-      if (localDateKey(entry.timestamp) === todayKey) return;
       (entry.wrongWords || []).forEach((word) => wordSet.add(word));
     });
     return Array.from(wordSet);
@@ -556,7 +552,13 @@
     const dots = coords
       .map((c) => {
         const { date } = formatHistoryTimestamp(c.timestamp);
-        return `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="3.2" class="progress-dot"><title>${date}: ${c.accuracy}%</title></circle>`;
+        const label = escapeHtml(`${date}: ${c.accuracy}% accuracy`);
+        return `
+          <g class="progress-point" tabindex="0" aria-label="${label}" data-point-label="${label}">
+            <circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="8" class="progress-dot-hit" />
+            <circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="3.2" class="progress-dot" />
+          </g>
+        `;
       })
       .join("");
 
@@ -586,6 +588,8 @@
     progressTrend.classList.toggle("is-up", diff > 2);
     progressTrend.classList.toggle("is-down", diff < -2);
     progressChartSvgWrap.innerHTML = buildProgressChartSvg(chronological);
+    progressPointInfo.textContent = PROGRESS_POINT_INFO_DEFAULT;
+    progressPointInfo.classList.remove("is-active");
   }
 
   function renderHistoryScreen() {
@@ -594,7 +598,7 @@
     if (history.length === 0) {
       historyEmptyMessage.hidden = false;
       progressChart.hidden = true;
-      practicePreviousDaysBtn.hidden = true;
+      practiceAllMissedBtn.hidden = true;
       historyList.innerHTML = "";
       clearHistoryBtn.hidden = true;
       return;
@@ -604,12 +608,12 @@
     clearHistoryBtn.hidden = false;
     renderProgressChart(history);
 
-    const previousDaysMissed = getMissedWordsFromPreviousDays();
-    if (previousDaysMissed.length > 0) {
-      practicePreviousDaysBtn.hidden = false;
-      practicePreviousDaysBtn.textContent = `Practice Previous Days' Missed Words (${previousDaysMissed.length})`;
+    const allMissed = getAllMissedWordsFromHistory();
+    if (allMissed.length > 0) {
+      practiceAllMissedBtn.hidden = false;
+      practiceAllMissedBtn.textContent = `Practice All Missed Words (${allMissed.length})`;
     } else {
-      practicePreviousDaysBtn.hidden = true;
+      practiceAllMissedBtn.hidden = true;
     }
 
     historyList.innerHTML = history
@@ -820,9 +824,9 @@
     }
   });
 
-  practicePreviousDaysBtn.addEventListener("click", () => {
-    const words = getMissedWordsFromPreviousDays();
-    if (words.length > 0) startDrill(words, "Previous Days' Missed Words");
+  practiceAllMissedBtn.addEventListener("click", () => {
+    const words = getAllMissedWordsFromHistory();
+    if (words.length > 0) startDrill(words, "All Missed Words");
   });
 
   historyList.addEventListener("click", (event) => {
@@ -833,6 +837,27 @@
     const { date } = formatHistoryTimestamp(entry.timestamp);
     startDrill(entry.wrongWords.slice(), `${date} Missed Words`);
   });
+
+  function showProgressPoint(event) {
+    const point = event.target.closest(".progress-point");
+    if (!point) return;
+    progressPointInfo.textContent = point.dataset.pointLabel;
+    progressPointInfo.classList.add("is-active");
+  }
+
+  function resetProgressPoint(event) {
+    if (!event.target.closest(".progress-point")) return;
+    progressPointInfo.textContent = PROGRESS_POINT_INFO_DEFAULT;
+    progressPointInfo.classList.remove("is-active");
+  }
+
+  // Listeners live on the wrapper (not the dots), since progressChartSvgWrap's
+  // innerHTML — and every dot inside it — is replaced on each render.
+  progressChartSvgWrap.addEventListener("mouseover", showProgressPoint);
+  progressChartSvgWrap.addEventListener("mouseout", resetProgressPoint);
+  progressChartSvgWrap.addEventListener("focusin", showProgressPoint);
+  progressChartSvgWrap.addEventListener("focusout", resetProgressPoint);
+  progressChartSvgWrap.addEventListener("click", showProgressPoint);
 
   gradeBackBtn.addEventListener("click", backToStartScreen);
 

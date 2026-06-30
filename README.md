@@ -79,10 +79,10 @@ named `spelling-practice-main` (repo name + branch), not `spelling-practice`
   you missed that round. History is saved in the browser's `localStorage`
   (the last 50 sessions), so it's local to that browser/device and isn't
   synced anywhere. **Clear History** wipes it.
-  - **Practice Previous Days' Missed Words** appears at the top of the
-    History screen once you have missed words from any day before today —
-    it drills every distinct word you've gotten wrong on a prior day, deduped
-    across sessions.
+  - **Practice All Missed Words** appears at the top of the History screen
+    once any logged session has a miss — it drills every distinct word
+    you've ever gotten wrong, deduped across every session in your history
+    (the round still in progress doesn't count until it's finished).
   - Each expanded session also has its own **Practice This Day's Missed
     Words** button, so you can drill a specific past session instead of
     everything at once.
@@ -90,8 +90,10 @@ named `spelling-practice-main` (repo name + branch), not `spelling-practice`
     chart appears at the top of the History screen — a line graph plotting
     accuracy across all your sessions, plus a one-line trend summary
     (trending up/down, or holding steady) comparing your earlier sessions to
-    your more recent ones. It's a hand-drawn inline SVG, not a third-party
-    charting library, so it still works offline from a plain `file://` open.
+    your more recent ones. Hover (or tap, or tab to focus) a point on the
+    line to see that session's exact date and accuracy. It's a hand-drawn
+    inline SVG, not a third-party charting library, so it still works
+    offline from a plain `file://` open.
 
 ## Customizing the word list
 

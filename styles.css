@@ -927,6 +927,43 @@ main {
   fill: var(--color-surface);
   stroke: var(--color-accent-dark);
   stroke-width: 1.6;
+  transition: r var(--duration-fast) var(--ease-out-expo),
+    fill var(--duration-fast) var(--ease-out-expo);
+}
+
+.progress-dot-hit {
+  fill: transparent;
+}
+
+.progress-point {
+  cursor: pointer;
+}
+
+.progress-point:hover .progress-dot,
+.progress-point:focus-visible .progress-dot {
+  r: 5;
+  fill: var(--color-accent);
+}
+
+.progress-point:focus-visible {
+  outline: none;
+}
+
+.progress-point:focus-visible .progress-dot-hit {
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+}
+
+.progress-chart-point-info {
+  margin: 0.5rem 0 0;
+  min-height: 1.1em;
+  font-size: 0.78rem;
+  color: var(--color-muted);
+}
+
+.progress-chart-point-info.is-active {
+  color: var(--color-accent-dark);
+  font-weight: 700;
 }
 
 .history-practice-all-btn {
@@ -1109,6 +1146,7 @@ footer {
   .difficulty-btn,
   .check-btn,
   .next-btn,
+  .progress-dot,
   #answerInput {
     transition: none;
   }
