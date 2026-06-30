@@ -35,6 +35,11 @@
           <h3>Accuracy Over Time</h3>
           <span class="progress-chart-trend" id="progressTrend"></span>
         </div>
+        <div class="progress-chart-controls">
+          <label for="progressLevelSelect" class="progress-chart-level-label">Level</label>
+          <select id="progressLevelSelect" class="progress-chart-level-select"></select>
+        </div>
+        <div class="progress-chart-legend" id="progressChartLegend" hidden></div>
         <div class="progress-chart-svg-wrap" id="progressChartSvgWrap"></div>
         <p class="progress-chart-point-info" id="progressPointInfo">Hover or tap a point to see that session's accuracy.</p>
       </div>
@@ -116,6 +121,8 @@
             <button type="submit" class="check-btn" id="checkBtn">Check</button>
           </form>
 
+          <p class="input-error" id="inputError" role="alert" hidden></p>
+
           <div class="feedback" id="feedback" aria-live="polite"></div>
 
           <button type="button" class="next-btn" id="nextBtn" hidden>Next Word &rarr;</button>
@@ -182,6 +189,7 @@
   <script src="js/words.js"></script>
   <script src="js/sentences.js"></script>
   <script src="js/definitions.js"></script>
+  <script src="js/pronunciations.js"></script>
   <script src="js/gradeLevels.js"></script>
   <script src="js/app.js"></script>
 </body>

@@ -351,6 +351,13 @@ main {
   color: var(--color-muted);
 }
 
+.input-error {
+  margin: -0.4rem 0 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-wrong);
+}
+
 .check-btn {
   border: none;
   border-radius: 12px;
@@ -917,7 +924,7 @@ main {
 }
 
 .progress-line {
-  stroke: var(--color-accent);
+  stroke: var(--line-color, var(--color-accent));
   stroke-width: 2.4;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -925,7 +932,7 @@ main {
 
 .progress-dot {
   fill: var(--color-surface);
-  stroke: var(--color-accent-dark);
+  stroke: var(--dot-color, var(--color-accent-dark));
   stroke-width: 1.6;
   transition: r var(--duration-fast) var(--ease-out-expo),
     fill var(--duration-fast) var(--ease-out-expo);
@@ -942,7 +949,7 @@ main {
 .progress-point:hover .progress-dot,
 .progress-point:focus-visible .progress-dot {
   r: 5;
-  fill: var(--color-accent);
+  fill: var(--dot-color, var(--color-accent));
 }
 
 .progress-point:focus-visible {
@@ -964,6 +971,68 @@ main {
 .progress-chart-point-info.is-active {
   color: var(--color-accent-dark);
   font-weight: 700;
+}
+
+.progress-chart-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.1rem 0 0.6rem;
+}
+
+.progress-chart-level-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+.progress-chart-level-select {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+.progress-chart-level-select:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.progress-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.progress-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.progress-legend-swatch {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: var(--swatch-color, var(--color-accent));
+  display: inline-block;
+}
+
+.progress-chart-empty {
+  margin: 0.4rem 0;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  font-style: italic;
 }
 
 .history-practice-all-btn {

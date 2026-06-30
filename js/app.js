@@ -10,6 +10,7 @@
   const answerInput = document.getElementById("answerInput");
   const checkBtn = document.getElementById("checkBtn");
   const feedback = document.getElementById("feedback");
+  const inputError = document.getElementById("inputError");
   const nextBtn = document.getElementById("nextBtn");
   const startScreen = document.getElementById("startScreen");
   const startBtn = document.getElementById("startBtn");
@@ -19,6 +20,8 @@
   const historyEmptyMessage = document.getElementById("historyEmptyMessage");
   const progressChart = document.getElementById("progressChart");
   const progressTrend = document.getElementById("progressTrend");
+  const progressLevelSelect = document.getElementById("progressLevelSelect");
+  const progressChartLegend = document.getElementById("progressChartLegend");
   const progressChartSvgWrap = document.getElementById("progressChartSvgWrap");
   const progressPointInfo = document.getElementById("progressPointInfo");
   const practiceAllMissedBtn = document.getElementById("practiceAllMissedBtn");
@@ -73,6 +76,16 @@
   let activeModeLabel = "";
   let activeModeColor = "";
   let selectedGradeId = null;
+
+  // Structured level/difficulty metadata for the *current* full round —
+  // saved alongside each history entry so the progress chart can group and
+  // filter sessions instead of plotting incomparable pools on one line.
+  let activeLevelKey = "classic";
+  let activeLevelLabel = "All Words (Classic)";
+  let activeDifficultyLabel = null;
+
+  // Which level the History screen's progress chart is currently showing.
+  let selectedProgressLevelKey = null;
 
   const HISTORY_STORAGE_KEY = "spellingPracticeHistory";
   const MAX_HISTORY_ENTRIES = 50;
@@ -207,18 +220,30 @@
     setTimeout(() => attemptSpeak(false), 50);
   }
 
+  // Some words trip up the browser's speechSynthesis voice (irregular
+  // stress, foreign-derived spelling). When a phonetic respelling exists in
+  // PRONUNCIATIONS, swap it in wherever the bare word appears in the text
+  // we're about to speak — including inside sentences/definitions that use
+  // the word — without ever touching currentWord, which still grades
+  // against the real spelling.
+  function applyPronunciationOverride(text, word) {
+    const override = PRONUNCIATIONS[word.toLowerCase()];
+    if (!override) return text;
+    return text.replace(new RegExp(`\\b${word}\\b`, "gi"), override);
+  }
+
   function speakWord(word) {
-    speakText(word, playBtn, 0.85);
+    speakText(applyPronunciationOverride(word, word), playBtn, 0.85);
   }
 
   function speakSentence(word) {
     const sentence = SENTENCES[word.toLowerCase()] || `Here's the word again: ${word}.`;
-    speakText(sentence, sentenceBtn, 0.95);
+    speakText(applyPronunciationOverride(sentence, word), sentenceBtn, 0.95);
   }
 
   function speakDefinition(word) {
     const definition = DEFINITIONS[word.toLowerCase()] || `No definition is available for this word yet.`;
-    speakText(definition, definitionBtn, 0.95);
+    speakText(applyPronunciationOverride(definition, word), definitionBtn, 0.95);
   }
 
   // Longest-common-subsequence alignment between the typed attempt and the
@@ -295,10 +320,13 @@
     });
   }
 
-  function startFullRound(words, modeLabel, modeColorVar) {
+  function startFullRound(words, modeLabel, modeColorVar, levelKey, levelLabel, difficultyLabel) {
     activeWords = words;
     activeModeLabel = modeLabel;
     activeModeColor = modeColorVar;
+    activeLevelKey = levelKey;
+    activeLevelLabel = levelLabel;
+    activeDifficultyLabel = difficultyLabel || null;
     if (modeLabel) {
       modeChip.textContent = modeLabel;
       modeChip.style.setProperty("--mode-color", `var(${modeColorVar})`);
@@ -378,7 +406,14 @@
     const gradeLabel = GRADE_LEVELS.find((g) => g.id === gradeId).label;
     const difficultyLabel =
       difficultyId === "mixed" ? "Mixed" : DIFFICULTIES.find((d) => d.id === difficultyId).label;
-    startFullRound(words, `${gradeLabel} · ${difficultyLabel}`, GRADE_COLOR_VARS[gradeId]);
+    startFullRound(
+      words,
+      `${gradeLabel} · ${difficultyLabel}`,
+      GRADE_COLOR_VARS[gradeId],
+      `grade-${gradeId}`,
+      gradeLabel,
+      difficultyLabel
+    );
   }
 
   function beginRound(words, roundMode) {
@@ -404,11 +439,11 @@
   }
 
   function startSession() {
-    startFullRound(WORDS, "", "");
+    startFullRound(WORDS, "", "", "classic", "All Words (Classic)", null);
   }
 
   function startNewRoundSamePool() {
-    startFullRound(activeWords, activeModeLabel, activeModeColor);
+    startFullRound(activeWords, activeModeLabel, activeModeColor, activeLevelKey, activeLevelLabel, activeDifficultyLabel);
   }
 
   function startDrill(words, label) {
@@ -428,6 +463,7 @@
     checkBtn.disabled = false;
     nextBtn.hidden = true;
     feedback.innerHTML = "";
+    inputError.hidden = true;
     flashcard.classList.remove("is-correct", "is-wrong");
     updateChips();
     answerInput.focus();
@@ -518,26 +554,74 @@
     return { text, diff };
   }
 
-  function buildProgressChartSvg(historyChronological) {
+  // Reads a session's grouping info, falling back to parsing the older
+  // free-text modeLabel for entries saved before levelKey/levelLabel
+  // existed, so history collected before this update still charts fine.
+  function getEntryLevel(entry) {
+    if (entry.levelKey) {
+      return {
+        levelKey: entry.levelKey,
+        levelLabel: entry.levelLabel || entry.modeLabel || "Practice",
+        difficultyLabel: entry.difficultyLabel || null,
+      };
+    }
+    const label = entry.modeLabel || "";
+    if (/missed words/i.test(label)) {
+      return { levelKey: "drill", levelLabel: "Missed Words Review", difficultyLabel: null };
+    }
+    if (label.includes("·")) {
+      const [gradePart, difficultyPart] = label.split("·").map((part) => part.trim());
+      const slug = gradePart
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
+      return { levelKey: `grade-${slug}`, levelLabel: gradePart, difficultyLabel: difficultyPart || null };
+    }
+    return { levelKey: "classic", levelLabel: label || "All Words (Classic)", difficultyLabel: null };
+  }
+
+  function getDifficultyColorVar(difficultyLabel) {
+    const key = (difficultyLabel || "").toLowerCase();
+    if (key.startsWith("extra")) return "--color-wrong";
+    if (key.startsWith("hard")) return "--color-play-dark";
+    if (key.startsWith("medium")) return "--color-accent";
+    if (key.startsWith("easy")) return "--color-correct";
+    if (key.startsWith("mixed")) return "--color-ink";
+    return "--color-accent";
+  }
+
+  // One entry per distinct level (Classic, each grade, Missed Words Review)
+  // found in history, newest-practiced first — used to populate the chart's
+  // level dropdown and to pick its default selection.
+  function getAvailableProgressLevels(history) {
+    const byKey = new Map();
+    history.forEach((entry) => {
+      const { levelKey, levelLabel } = getEntryLevel(entry);
+      const existing = byKey.get(levelKey);
+      if (!existing || entry.timestamp > existing.latestTimestamp) {
+        byKey.set(levelKey, { levelKey, levelLabel, latestTimestamp: entry.timestamp });
+      }
+    });
+    return Array.from(byKey.values()).sort((a, b) => b.latestTimestamp - a.latestTimestamp);
+  }
+
+  function buildProgressChartSvg(levelEntries, difficulties) {
     const width = 320;
     const height = 140;
     const paddingX = 26;
     const paddingY = 16;
     const plotWidth = width - paddingX * 2;
     const plotHeight = height - paddingY * 2;
-    const n = historyChronological.length;
+    const n = levelEntries.length;
     const xStep = n > 1 ? plotWidth / (n - 1) : 0;
 
-    const coords = historyChronological.map((entry, i) => ({
+    const coords = levelEntries.map((entry, i) => ({
       x: paddingX + i * xStep,
       y: height - paddingY - (entry.accuracy / 100) * plotHeight,
       accuracy: entry.accuracy,
       timestamp: entry.timestamp,
+      difficultyLabel: getEntryLevel(entry).difficultyLabel,
     }));
-
-    const linePath = coords
-      .map((c, i) => `${i === 0 ? "M" : "L"}${c.x.toFixed(1)},${c.y.toFixed(1)}`)
-      .join(" ");
 
     const gridLines = [0, 25, 50, 75, 100]
       .map((pct) => {
@@ -549,16 +633,42 @@
       })
       .join("");
 
-    const dots = coords
-      .map((c) => {
-        const { date } = formatHistoryTimestamp(c.timestamp);
-        const label = escapeHtml(`${date}: ${c.accuracy}% accuracy`);
-        return `
-          <g class="progress-point" tabindex="0" aria-label="${label}" data-point-label="${label}">
-            <circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="8" class="progress-dot-hit" />
-            <circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="3.2" class="progress-dot" />
-          </g>
-        `;
+    // With two or more difficulties present, split into one line per
+    // difficulty (each its own color) instead of one misleading average
+    // line mixing Easy and Extra Hard sessions together.
+    const useMultiLine = difficulties.length >= 2;
+    const groups = useMultiLine ? difficulties : [null];
+
+    const linesAndDots = groups
+      .map((difficultyLabel) => {
+        const groupCoords = useMultiLine ? coords.filter((c) => c.difficultyLabel === difficultyLabel) : coords;
+        if (groupCoords.length === 0) return "";
+        const colorVar = useMultiLine ? getDifficultyColorVar(difficultyLabel) : "--color-accent";
+
+        const linePath = groupCoords
+          .map((c, i) => `${i === 0 ? "M" : "L"}${c.x.toFixed(1)},${c.y.toFixed(1)}`)
+          .join(" ");
+        const line =
+          groupCoords.length > 1
+            ? `<path d="${linePath}" class="progress-line" style="--line-color: var(${colorVar})" fill="none" />`
+            : "";
+
+        const dots = groupCoords
+          .map((c) => {
+            const { date } = formatHistoryTimestamp(c.timestamp);
+            const label = escapeHtml(
+              `${date}${c.difficultyLabel ? ` (${c.difficultyLabel})` : ""}: ${c.accuracy}% accuracy`
+            );
+            return `
+              <g class="progress-point" tabindex="0" aria-label="${label}" data-point-label="${label}">
+                <circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="8" class="progress-dot-hit" />
+                <circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="3.2" class="progress-dot" style="--dot-color: var(${colorVar})" />
+              </g>
+            `;
+          })
+          .join("");
+
+        return line + dots;
       })
       .join("");
 
@@ -568,28 +678,82 @@
     return `
       <svg viewBox="0 0 ${width} ${height}" class="progress-chart-svg" role="img" aria-label="Accuracy across your last ${n} sessions, from ${firstLabel} to ${lastLabel}">
         ${gridLines}
-        <path d="${linePath}" class="progress-line" fill="none" />
-        ${dots}
+        ${linesAndDots}
         <text x="${paddingX}" y="${height - 2}" class="progress-axis-label">${firstLabel}</text>
         <text x="${width - paddingX}" y="${height - 2}" class="progress-axis-label" text-anchor="end">${lastLabel}</text>
       </svg>
     `;
   }
 
-  function renderProgressChart(history) {
-    const chronological = history.slice().reverse();
-    if (chronological.length < 2) {
-      progressChart.hidden = true;
+  function renderProgressLegend(difficulties) {
+    if (difficulties.length < 2) {
+      progressChartLegend.hidden = true;
+      progressChartLegend.innerHTML = "";
       return;
     }
-    const { text, diff } = computeAccuracyTrend(chronological);
-    progressChart.hidden = false;
+    progressChartLegend.hidden = false;
+    progressChartLegend.innerHTML = difficulties
+      .map(
+        (label) => `
+          <span class="progress-legend-item">
+            <span class="progress-legend-swatch" style="--swatch-color: var(${getDifficultyColorVar(label)})"></span>
+            ${escapeHtml(label)}
+          </span>
+        `
+      )
+      .join("");
+  }
+
+  function renderChartForSelectedLevel(history) {
+    const levelEntries = history
+      .filter((entry) => getEntryLevel(entry).levelKey === selectedProgressLevelKey)
+      .slice()
+      .reverse();
+
+    if (levelEntries.length < 2) {
+      progressTrend.textContent = "";
+      progressTrend.classList.remove("is-up", "is-down");
+      progressChartLegend.hidden = true;
+      progressChartLegend.innerHTML = "";
+      progressPointInfo.hidden = true;
+      progressChartSvgWrap.innerHTML = `<p class="progress-chart-empty">Complete one more session at this level to see a trend.</p>`;
+      return;
+    }
+
+    const { text, diff } = computeAccuracyTrend(levelEntries);
     progressTrend.textContent = text;
     progressTrend.classList.toggle("is-up", diff > 2);
     progressTrend.classList.toggle("is-down", diff < -2);
-    progressChartSvgWrap.innerHTML = buildProgressChartSvg(chronological);
+
+    const difficulties = Array.from(
+      new Set(levelEntries.map((entry) => getEntryLevel(entry).difficultyLabel).filter(Boolean))
+    );
+
+    progressChartSvgWrap.innerHTML = buildProgressChartSvg(levelEntries, difficulties);
+    renderProgressLegend(difficulties);
+    progressPointInfo.hidden = false;
     progressPointInfo.textContent = PROGRESS_POINT_INFO_DEFAULT;
     progressPointInfo.classList.remove("is-active");
+  }
+
+  function renderProgressSection(history) {
+    const levels = getAvailableProgressLevels(history);
+    if (levels.length === 0) {
+      progressChart.hidden = true;
+      return;
+    }
+    progressChart.hidden = false;
+
+    if (!selectedProgressLevelKey || !levels.some((level) => level.levelKey === selectedProgressLevelKey)) {
+      selectedProgressLevelKey = levels[0].levelKey;
+    }
+
+    progressLevelSelect.innerHTML = levels
+      .map((level) => `<option value="${escapeHtml(level.levelKey)}">${escapeHtml(level.levelLabel)}</option>`)
+      .join("");
+    progressLevelSelect.value = selectedProgressLevelKey;
+
+    renderChartForSelectedLevel(history);
   }
 
   function renderHistoryScreen() {
@@ -606,7 +770,7 @@
 
     historyEmptyMessage.hidden = true;
     clearHistoryBtn.hidden = false;
-    renderProgressChart(history);
+    renderProgressSection(history);
 
     const allMissed = getAllMissedWordsFromHistory();
     if (allMissed.length > 0) {
@@ -718,9 +882,13 @@
     wrongWordsCount.textContent = String(roundWrongWords.length);
 
     if (asked > 0) {
+      const isDrill = mode === "drill";
       saveHistoryEntry({
         timestamp: Date.now(),
-        modeLabel: mode === "drill" ? drillLabel : activeModeLabel || "All Words (Classic)",
+        modeLabel: isDrill ? drillLabel : activeModeLabel || "All Words (Classic)",
+        levelKey: isDrill ? "drill" : activeLevelKey,
+        levelLabel: isDrill ? "Missed Words Review" : activeLevelLabel,
+        difficultyLabel: isDrill ? null : activeDifficultyLabel,
         asked,
         correct,
         wrong,
@@ -747,6 +915,8 @@
     startBtn.focus();
   }
 
+  const LETTERS_ONLY_PATTERN = /^[A-Za-z]+$/;
+
   function checkAnswer() {
     if (answered) return;
     const typed = answerInput.value.trim();
@@ -754,6 +924,14 @@
       answerInput.focus();
       return;
     }
+
+    if (!LETTERS_ONLY_PATTERN.test(typed)) {
+      inputError.textContent = "Letters only, please — remove any numbers or symbols before checking.";
+      inputError.hidden = false;
+      answerInput.focus();
+      return;
+    }
+    inputError.hidden = true;
 
     answered = true;
     asked++;
@@ -801,6 +979,10 @@
     checkAnswer();
   });
 
+  answerInput.addEventListener("input", () => {
+    if (!inputError.hidden) inputError.hidden = true;
+  });
+
   playBtn.addEventListener("click", () => speakWord(currentWord));
 
   sentenceBtn.addEventListener("click", () => speakSentence(currentWord));
@@ -827,6 +1009,11 @@
   practiceAllMissedBtn.addEventListener("click", () => {
     const words = getAllMissedWordsFromHistory();
     if (words.length > 0) startDrill(words, "All Missed Words");
+  });
+
+  progressLevelSelect.addEventListener("change", () => {
+    selectedProgressLevelKey = progressLevelSelect.value;
+    renderChartForSelectedLevel(loadHistory());
   });
 
   historyList.addEventListener("click", (event) => {

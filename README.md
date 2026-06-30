@@ -55,6 +55,9 @@ named `spelling-practice-main` (repo name + branch), not `spelling-practice`
 - **Hear the Definition** speaks the word's dictionary definition aloud,
   for an extra context clue without showing the word's spelling on screen.
 - Type your answer and hit **Enter** (or click **Check**).
+  - Answers may only contain letters — if you type a number or symbol,
+    **Check** is blocked and a message asks you to remove it before trying
+    again. The message clears as soon as you start editing.
   - **Correct** → green flash, move on.
   - **Wrong** → shows the correct spelling with the specific letters you
     missed underlined in red (using a longest-common-subsequence alignment,
@@ -86,14 +89,21 @@ named `spelling-practice-main` (repo name + branch), not `spelling-practice`
   - Each expanded session also has its own **Practice This Day's Missed
     Words** button, so you can drill a specific past session instead of
     everything at once.
-  - Once you have at least two sessions logged, an **Accuracy Over Time**
-    chart appears at the top of the History screen — a line graph plotting
-    accuracy across all your sessions, plus a one-line trend summary
-    (trending up/down, or holding steady) comparing your earlier sessions to
-    your more recent ones. Hover (or tap, or tab to focus) a point on the
-    line to see that session's exact date and accuracy. It's a hand-drawn
-    inline SVG, not a third-party charting library, so it still works
-    offline from a plain `file://` open.
+  - Once you have at least two sessions logged at the same level, an
+    **Accuracy Over Time** chart appears at the top of the History screen —
+    a line graph plotting accuracy across your sessions for one level at a
+    time, plus a one-line trend summary (trending up/down, or holding
+    steady) comparing your earlier sessions to your more recent ones. A
+    **Level** dropdown picks which pool of sessions to chart (All Words
+    Classic, a specific grade, or Missed Words Review) so Classic and 3rd
+    Grade accuracy never get averaged together on one misleading line. If
+    the selected level has sessions at more than one difficulty, the chart
+    draws a separate colored line per difficulty (Easy/Medium/Hard/Extra
+    Hard/Mixed) with a color-key legend above it, instead of blending them.
+    Hover (or tap, or tab to focus) a point on the line to see that
+    session's exact date, difficulty, and accuracy. It's a hand-drawn inline
+    SVG, not a third-party charting library, so it still works offline from
+    a plain `file://` open.
 
 ## Customizing the word list
 
@@ -120,6 +130,27 @@ const WORD_LEVELS = {
 
 Words left out of `gradeLevels.js` still work fine in "All Words (Classic)"
 mode; they just won't show up in any grade/difficulty pool.
+
+## Fixing a mispronounced word
+
+The browser's built-in voice sometimes mangles uncommon or foreign-derived
+words (e.g. it read "penitent" as something closer to "peninent"). If you
+catch one, add it to `js/pronunciations.js`:
+
+```js
+const PRONUNCIATIONS = {
+  penitent: "PEN-ih-tent",
+  // lowercase word: "TTS-friendly respelling, broken into syllables"
+};
+```
+
+The respelling is only used for speech — the actual word (and what you have
+to type) is unchanged. It's substituted into "Play Word", "Use in a
+Sentence", and "Hear the Definition" alike, so a word that appears inside an
+example sentence still gets the corrected pronunciation there too. A
+respelling has no special phonetic symbols, just plain letters split into
+syllables with the stressed one capitalized — that alone gets most browser
+voices much closer to correct.
 
 ## Browser support note
 
