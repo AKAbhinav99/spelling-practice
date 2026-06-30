@@ -857,6 +857,18 @@ main {
   font-style: italic;
 }
 
+.history-practice-all-btn {
+  display: block;
+  width: 100%;
+  margin: 0 0 1rem;
+}
+
+.history-practice-entry-btn {
+  margin-top: 0.9rem;
+  padding: calc(0.6rem - 2px) 1.1rem;
+  font-size: 0.85rem;
+}
+
 .history-list {
   display: flex;
   flex-direction: column;

@@ -17,6 +17,7 @@
   const historyBtn = document.getElementById("historyBtn");
   const historyScreen = document.getElementById("historyScreen");
   const historyEmptyMessage = document.getElementById("historyEmptyMessage");
+  const practicePreviousDaysBtn = document.getElementById("practicePreviousDaysBtn");
   const historyList = document.getElementById("historyList");
   const clearHistoryBtn = document.getElementById("clearHistoryBtn");
   const historyBackBtn = document.getElementById("historyBackBtn");
@@ -56,6 +57,7 @@
   let correct = 0;
   let roundCorrectWords = [];
   let roundWrongWords = [];
+  let drillLabel = "Missed Words Review";
   let answered = false;
   let sessionStartTime = null;
   let timerInterval = null;
@@ -404,7 +406,8 @@
     startFullRound(activeWords, activeModeLabel, activeModeColor);
   }
 
-  function startDrill(words) {
+  function startDrill(words, label) {
+    drillLabel = label || "Missed Words Review";
     beginRound(words, "drill");
   }
 
@@ -475,11 +478,31 @@
     };
   }
 
+  function localDateKey(timestamp) {
+    const date = new Date(timestamp);
+    return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+  }
+
+  // Words missed on any day before today, deduped — lets a learner drill
+  // everything that's tripped them up previously without re-asking words
+  // they only just got wrong in today's still-in-progress practice.
+  function getMissedWordsFromPreviousDays() {
+    const history = loadHistory();
+    const todayKey = localDateKey(Date.now());
+    const wordSet = new Set();
+    history.forEach((entry) => {
+      if (localDateKey(entry.timestamp) === todayKey) return;
+      (entry.wrongWords || []).forEach((word) => wordSet.add(word));
+    });
+    return Array.from(wordSet);
+  }
+
   function renderHistoryScreen() {
     const history = loadHistory();
 
     if (history.length === 0) {
       historyEmptyMessage.hidden = false;
+      practicePreviousDaysBtn.hidden = true;
       historyList.innerHTML = "";
       clearHistoryBtn.hidden = true;
       return;
@@ -488,9 +511,21 @@
     historyEmptyMessage.hidden = true;
     clearHistoryBtn.hidden = false;
 
+    const previousDaysMissed = getMissedWordsFromPreviousDays();
+    if (previousDaysMissed.length > 0) {
+      practicePreviousDaysBtn.hidden = false;
+      practicePreviousDaysBtn.textContent = `Practice Previous Days' Missed Words (${previousDaysMissed.length})`;
+    } else {
+      practicePreviousDaysBtn.hidden = true;
+    }
+
     historyList.innerHTML = history
-      .map((entry) => {
+      .map((entry, index) => {
         const { date, time } = formatHistoryTimestamp(entry.timestamp);
+        const practiceEntryBtn =
+          entry.wrongWords.length > 0
+            ? `<button type="button" class="secondary-btn history-practice-entry-btn" data-history-index="${index}">Practice This Day's Missed Words</button>`
+            : "";
         return `
           <details class="history-entry">
             <summary class="history-summary">
@@ -516,6 +551,7 @@
                   <ul class="word-list">${wordListItemsHtml(entry.correctWords)}</ul>
                 </div>
               </div>
+              ${practiceEntryBtn}
             </div>
           </details>
         `;
@@ -587,7 +623,7 @@
     if (asked > 0) {
       saveHistoryEntry({
         timestamp: Date.now(),
-        modeLabel: mode === "drill" ? "Missed Words Review" : activeModeLabel || "All Words (Classic)",
+        modeLabel: mode === "drill" ? drillLabel : activeModeLabel || "All Words (Classic)",
         asked,
         correct,
         wrong,
@@ -689,6 +725,20 @@
       clearHistory();
       renderHistoryScreen();
     }
+  });
+
+  practicePreviousDaysBtn.addEventListener("click", () => {
+    const words = getMissedWordsFromPreviousDays();
+    if (words.length > 0) startDrill(words, "Previous Days' Missed Words");
+  });
+
+  historyList.addEventListener("click", (event) => {
+    const btn = event.target.closest(".history-practice-entry-btn");
+    if (!btn) return;
+    const entry = loadHistory()[Number(btn.dataset.historyIndex)];
+    if (!entry || !entry.wrongWords || entry.wrongWords.length === 0) return;
+    const { date } = formatHistoryTimestamp(entry.timestamp);
+    startDrill(entry.wrongWords.slice(), `${date} Missed Words`);
   });
 
   gradeBackBtn.addEventListener("click", backToStartScreen);

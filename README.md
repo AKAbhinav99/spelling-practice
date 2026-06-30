@@ -79,6 +79,13 @@ named `spelling-practice-main` (repo name + branch), not `spelling-practice`
   you missed that round. History is saved in the browser's `localStorage`
   (the last 50 sessions), so it's local to that browser/device and isn't
   synced anywhere. **Clear History** wipes it.
+  - **Practice Previous Days' Missed Words** appears at the top of the
+    History screen once you have missed words from any day before today —
+    it drills every distinct word you've gotten wrong on a prior day, deduped
+    across sessions.
+  - Each expanded session also has its own **Practice This Day's Missed
+    Words** button, so you can drill a specific past session instead of
+    everything at once.
 
 ## Customizing the word list
 
