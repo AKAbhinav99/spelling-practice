@@ -857,6 +857,78 @@ main {
   font-style: italic;
 }
 
+.progress-chart {
+  text-align: left;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-bg);
+  padding: 1rem 1rem 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.progress-chart-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.8rem;
+  margin-bottom: 0.3rem;
+}
+
+.progress-chart-header h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.progress-chart-trend {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.progress-chart-trend.is-up {
+  color: var(--color-correct);
+}
+
+.progress-chart-trend.is-down {
+  color: var(--color-wrong);
+}
+
+.progress-chart-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.progress-gridline {
+  stroke: var(--color-border);
+  stroke-width: 1;
+}
+
+.progress-axis-label {
+  font-size: 8px;
+  fill: var(--color-muted);
+  font-family: var(--font-body);
+}
+
+.progress-line {
+  stroke: var(--color-accent);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.progress-dot {
+  fill: var(--color-surface);
+  stroke: var(--color-accent-dark);
+  stroke-width: 1.6;
+}
+
 .history-practice-all-btn {
   display: block;
   width: 100%;

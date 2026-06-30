@@ -17,6 +17,9 @@
   const historyBtn = document.getElementById("historyBtn");
   const historyScreen = document.getElementById("historyScreen");
   const historyEmptyMessage = document.getElementById("historyEmptyMessage");
+  const progressChart = document.getElementById("progressChart");
+  const progressTrend = document.getElementById("progressTrend");
+  const progressChartSvgWrap = document.getElementById("progressChartSvgWrap");
   const practicePreviousDaysBtn = document.getElementById("practicePreviousDaysBtn");
   const historyList = document.getElementById("historyList");
   const clearHistoryBtn = document.getElementById("clearHistoryBtn");
@@ -497,11 +500,100 @@
     return Array.from(wordSet);
   }
 
+  function average(numbers) {
+    return numbers.reduce((sum, n) => sum + n, 0) / numbers.length;
+  }
+
+  // Compares the average accuracy of the earlier half of sessions against
+  // the more recent half, so a single great-or-terrible round doesn't swing
+  // the headline trend by itself.
+  function computeAccuracyTrend(historyChronological) {
+    const n = historyChronological.length;
+    const half = Math.max(1, Math.floor(n / 2));
+    const earlyAvg = average(historyChronological.slice(0, half).map((entry) => entry.accuracy));
+    const recentAvg = average(historyChronological.slice(n - half).map((entry) => entry.accuracy));
+    const diff = Math.round(recentAvg - earlyAvg);
+
+    let text;
+    if (diff > 2) text = `Trending up — accuracy is ${diff}% higher than your earlier sessions.`;
+    else if (diff < -2) text = `Trending down — accuracy is ${Math.abs(diff)}% lower than your earlier sessions.`;
+    else text = "Holding steady compared to your earlier sessions.";
+
+    return { text, diff };
+  }
+
+  function buildProgressChartSvg(historyChronological) {
+    const width = 320;
+    const height = 140;
+    const paddingX = 26;
+    const paddingY = 16;
+    const plotWidth = width - paddingX * 2;
+    const plotHeight = height - paddingY * 2;
+    const n = historyChronological.length;
+    const xStep = n > 1 ? plotWidth / (n - 1) : 0;
+
+    const coords = historyChronological.map((entry, i) => ({
+      x: paddingX + i * xStep,
+      y: height - paddingY - (entry.accuracy / 100) * plotHeight,
+      accuracy: entry.accuracy,
+      timestamp: entry.timestamp,
+    }));
+
+    const linePath = coords
+      .map((c, i) => `${i === 0 ? "M" : "L"}${c.x.toFixed(1)},${c.y.toFixed(1)}`)
+      .join(" ");
+
+    const gridLines = [0, 25, 50, 75, 100]
+      .map((pct) => {
+        const y = height - paddingY - (pct / 100) * plotHeight;
+        return `
+          <line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" class="progress-gridline" />
+          <text x="${paddingX - 6}" y="${y + 3}" class="progress-axis-label" text-anchor="end">${pct}</text>
+        `;
+      })
+      .join("");
+
+    const dots = coords
+      .map((c) => {
+        const { date } = formatHistoryTimestamp(c.timestamp);
+        return `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="3.2" class="progress-dot"><title>${date}: ${c.accuracy}%</title></circle>`;
+      })
+      .join("");
+
+    const firstLabel = formatHistoryTimestamp(coords[0].timestamp).date;
+    const lastLabel = formatHistoryTimestamp(coords[coords.length - 1].timestamp).date;
+
+    return `
+      <svg viewBox="0 0 ${width} ${height}" class="progress-chart-svg" role="img" aria-label="Accuracy across your last ${n} sessions, from ${firstLabel} to ${lastLabel}">
+        ${gridLines}
+        <path d="${linePath}" class="progress-line" fill="none" />
+        ${dots}
+        <text x="${paddingX}" y="${height - 2}" class="progress-axis-label">${firstLabel}</text>
+        <text x="${width - paddingX}" y="${height - 2}" class="progress-axis-label" text-anchor="end">${lastLabel}</text>
+      </svg>
+    `;
+  }
+
+  function renderProgressChart(history) {
+    const chronological = history.slice().reverse();
+    if (chronological.length < 2) {
+      progressChart.hidden = true;
+      return;
+    }
+    const { text, diff } = computeAccuracyTrend(chronological);
+    progressChart.hidden = false;
+    progressTrend.textContent = text;
+    progressTrend.classList.toggle("is-up", diff > 2);
+    progressTrend.classList.toggle("is-down", diff < -2);
+    progressChartSvgWrap.innerHTML = buildProgressChartSvg(chronological);
+  }
+
   function renderHistoryScreen() {
     const history = loadHistory();
 
     if (history.length === 0) {
       historyEmptyMessage.hidden = false;
+      progressChart.hidden = true;
       practicePreviousDaysBtn.hidden = true;
       historyList.innerHTML = "";
       clearHistoryBtn.hidden = true;
@@ -510,6 +602,7 @@
 
     historyEmptyMessage.hidden = true;
     clearHistoryBtn.hidden = false;
+    renderProgressChart(history);
 
     const previousDaysMissed = getMissedWordsFromPreviousDays();
     if (previousDaysMissed.length > 0) {

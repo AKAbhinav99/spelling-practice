@@ -86,6 +86,12 @@ named `spelling-practice-main` (repo name + branch), not `spelling-practice`
   - Each expanded session also has its own **Practice This Day's Missed
     Words** button, so you can drill a specific past session instead of
     everything at once.
+  - Once you have at least two sessions logged, an **Accuracy Over Time**
+    chart appears at the top of the History screen — a line graph plotting
+    accuracy across all your sessions, plus a one-line trend summary
+    (trending up/down, or holding steady) comparing your earlier sessions to
+    your more recent ones. It's a hand-drawn inline SVG, not a third-party
+    charting library, so it still works offline from a plain `file://` open.
 
 ## Customizing the word list
 
